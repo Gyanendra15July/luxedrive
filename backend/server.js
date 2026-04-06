@@ -16,9 +16,23 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 const PORT = Number.parseInt(process.env.PORT, 10) || 5000;
 
-// Middleware
-app.use(cors());
+// Enhanced Production Middleware
+// Configure CORS for production domains
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || '*', // Set this to your Render frontend domain if decoupled
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    optionsSuccessStatus: 204
+};
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// Debug & Logging middleware for API Tracking
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    next();
+});
+
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/uploads', express.static(path.join(__dirname, '../frontend/uploads'))); // Serve uploads
 
