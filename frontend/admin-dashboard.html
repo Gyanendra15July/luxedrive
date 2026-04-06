@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | LUXEDRIVE</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">LUXEDRIVE</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/cars">Fleet</a>
+            <a href="/admin-dashboard" class="active">Admin Panel</a>
+            <a href="/login" id="loginBtn">Sign In</a>
+            <a href="#" id="logoutBtn" style="display: none;" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1 class="reveal">Admin Dashboard</h1>
+        <p class="reveal">Manage cars, bookings, and system stats</p>
+    </header>
+
+    <div class="container">
+        <div class="stats-grid reveal">
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-users"></i> Total Users</div>
+                <div class="stat-value" id="stat-users">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-car"></i> Total Cars</div>
+                <div class="stat-value" id="stat-cars">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-receipt"></i> Total Bookings</div>
+                <div class="stat-value" id="stat-bookings">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-crown"></i> Most Booked</div>
+                <div class="stat-value" style="font-size: 1.15rem; font-weight: 700;" id="stat-most-booked">—</div>
+                <div class="muted" id="stat-most-booked-sub" style="margin-top: 0.5rem;"></div>
+            </div>
+        </div>
+
+        <div class="car-card reveal" style="margin-bottom: 2.5rem;">
+            <h3 style="margin-bottom: 1.5rem;">Add / Edit Car</h3>
+            <form id="carForm">
+                <div class="car-specs-grid">
+                    <div class="form-group">
+                        <label for="car_name">Car Name</label>
+                        <input id="car_name" type="text" placeholder="Mercedes S-Class" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="brand">Brand</label>
+                        <input id="brand" type="text" placeholder="Mercedes" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="price_per_day">Price per day</label>
+                        <input id="price_per_day" type="number" min="1" placeholder="250" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="type">Category</label>
+                        <select id="type">
+                            <option value="Luxury" selected>Luxury</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Sports">Sports</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column: 1/-1;">
+                        <label for="image">Car Image URL</label>
+                        <input id="image" type="url" placeholder="https://..." required>
+                    </div>
+                    <div class="form-group" style="grid-column: 1/-1;">
+                        <label for="description">Description</label>
+                        <textarea id="description" rows="4" placeholder="Premium features, comfort, performance..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="availability_status">Availability</label>
+                        <select id="availability_status">
+                            <option value="available" selected>Available</option>
+                            <option value="unavailable">Unavailable</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                    <button type="submit" class="btn btn-primary btn-lg">Save Car</button>
+                    <button type="button" class="btn btn-outline btn-lg" id="cancelEditBtn" style="display:none;">Cancel Edit</button>
+                </div>
+                <p class="muted" id="carFormHint" style="margin-top: 1rem;"></p>
+            </form>
+        </div>
+
+        <div class="car-card reveal" style="margin-bottom: 2.5rem;">
+            <div style="display:flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <h3 style="margin: 0;">Cars</h3>
+                <button class="btn btn-outline" id="refreshCarsBtn" type="button">Refresh</button>
+            </div>
+            <div class="table-container" style="margin-top: 1.5rem;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Car</th>
+                            <th>Brand</th>
+                            <th>Category</th>
+                            <th>Price/day</th>
+                            <th>Status</th>
+                            <th style="width: 220px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carsTableBody">
+                        <tr><td colspan="6" class="muted">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="muted" style="margin-top: 1rem;">Tip: If a car has bookings, delete is blocked—set it to Unavailable instead.</p>
+        </div>
+
+        <div class="car-card reveal" style="margin-bottom: 2.5rem;">
+            <h3 style="margin-bottom: 1.5rem;">Bookings per Car</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Car</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Bookings</th>
+                            <th>Unique Users</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carBookingsBody">
+                        <tr><td colspan="5" class="muted">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="car-card reveal">
+            <h3 style="margin-bottom: 1.5rem;">All Bookings</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Car</th>
+                            <th>Pickup</th>
+                            <th>Return</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allBookingsBody">
+                        <tr><td colspan="5" class="muted">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/script.js"></script>
+    <script>
+        let editingCarId = null;
+
+        function requireAdmin() {
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+            if (!token) {
+                window.location.href = '/login';
+                return null;
+            }
+            if (role !== 'admin') {
+                window.location.href = '/dashboard';
+                return null;
+            }
+            return token;
+        }
+
+        async function fetchJson(url, token, opts = {}) {
+            const res = await fetch(url, {
+                ...opts,
+                headers: {
+                    ...(opts.headers || {}),
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const contentType = (res.headers.get('content-type') || '').toLowerCase();
+            let data = null;
+            let text = '';
+
+            if (contentType.includes('application/json')) {
+                data = await res.json().catch(() => null);
+            } else {
+                text = await res.text().catch(() => '');
+            }
+
+            if (!res.ok) {
+                const msg =
+                    (data && data.message) ||
+                    (text && text.trim().slice(0, 200)) ||
+                    `${res.status} ${res.statusText}`;
+                throw new Error(msg);
+            }
+
+            return data ?? {};
+        }
+
+        async function loadStats(token) {
+            const stats = await fetchJson('/api/admin/stats', token, { method: 'GET' });
+            document.getElementById('stat-users').innerText = stats.total_users ?? '0';
+            document.getElementById('stat-cars').innerText = stats.total_cars ?? '0';
+            document.getElementById('stat-bookings').innerText = stats.total_bookings ?? '0';
+
+            if (stats.most_booked_car) {
+                document.getElementById('stat-most-booked').innerText = stats.most_booked_car.car_name;
+                document.getElementById('stat-most-booked-sub').innerText =
+                    `${stats.most_booked_car.brand} • ${stats.most_booked_car.type} • ${stats.most_booked_car.bookings_count} bookings`;
+            } else {
+                document.getElementById('stat-most-booked').innerText = '—';
+                document.getElementById('stat-most-booked-sub').innerText = 'No bookings yet';
+            }
+        }
+
+        function renderCarsTable(cars) {
+            const body = document.getElementById('carsTableBody');
+            if (!cars.length) {
+                body.innerHTML = '<tr><td colspan="6" class="muted">No cars found.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = cars.map((c) => `
+                <tr>
+                    <td>${c.car_name}</td>
+                    <td>${c.brand}</td>
+                    <td>${c.type || 'Luxury'}</td>
+                    <td>$${c.price_per_day}</td>
+                    <td>${c.availability_status === 'unavailable' ? '<span class="muted">Unavailable</span>' : 'Available'}</td>
+                    <td>
+                        <button class="btn btn-outline" type="button" onclick="startEdit(${c.id})">Edit</button>
+                        <button class="btn btn-primary" type="button" style="margin-left: 0.5rem;" onclick="deleteCar(${c.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderCarBookings(rows) {
+            const body = document.getElementById('carBookingsBody');
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="5" class="muted">No data.</td></tr>';
+                return;
+            }
+            body.innerHTML = rows.map((r) => `
+                <tr>
+                    <td>${r.car_name} <span class="muted">(${r.brand})</span></td>
+                    <td>${r.type || 'Luxury'}</td>
+                    <td>${r.availability_status === 'unavailable' ? '<span class="muted">Unavailable</span>' : 'Available'}</td>
+                    <td>${r.bookings_count}</td>
+                    <td>${r.unique_users_count}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderBookingsTable(bookings) {
+            const body = document.getElementById('allBookingsBody');
+            if (!bookings.length) {
+                body.innerHTML = '<tr><td colspan="5" class="muted">No bookings found.</td></tr>';
+                return;
+            }
+            body.innerHTML = bookings.map((b) => `
+                <tr>
+                    <td>${b.user_name} <span class="muted">(${b.user_email})</span></td>
+                    <td>${b.car_name} <span class="muted">(${b.brand})</span></td>
+                    <td>${b.pickup_date}</td>
+                    <td>${b.return_date}</td>
+                    <td>$${b.total_price}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadCars(token) {
+            const cars = await fetchJson('/api/admin/cars', token, { method: 'GET' });
+            window.__adminCars = cars;
+            renderCarsTable(cars);
+        }
+
+        async function loadCarBookings(token) {
+            const rows = await fetchJson('/api/admin/car-bookings', token, { method: 'GET' });
+            renderCarBookings(rows);
+        }
+
+        async function loadBookings(token) {
+            const bookings = await fetchJson('/api/admin/bookings', token, { method: 'GET' });
+            renderBookingsTable(bookings);
+        }
+
+        function setFormHint(text) {
+            document.getElementById('carFormHint').innerText = text || '';
+        }
+
+        function resetForm() {
+            editingCarId = null;
+            document.getElementById('carForm').reset();
+            document.getElementById('availability_status').value = 'available';
+            document.getElementById('type').value = 'Luxury';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            setFormHint('');
+        }
+
+        window.startEdit = function startEdit(carId) {
+            const cars = window.__adminCars || [];
+            const car = cars.find((c) => Number(c.id) === Number(carId));
+            if (!car) return;
+
+            editingCarId = carId;
+            document.getElementById('car_name').value = car.car_name || '';
+            document.getElementById('brand').value = car.brand || '';
+            document.getElementById('price_per_day').value = car.price_per_day || '';
+            document.getElementById('type').value = car.type || 'Luxury';
+            document.getElementById('image').value = car.image || '';
+            document.getElementById('description').value = car.description || '';
+            document.getElementById('availability_status').value = car.availability_status || 'available';
+
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
+            setFormHint(`Editing car #${carId}`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.deleteCar = async function deleteCar(carId) {
+            const token = requireAdmin();
+            if (!token) return;
+            if (!confirm('Delete this car?')) return;
+
+            try {
+                await fetchJson(`/api/admin/cars/${carId}`, token, { method: 'DELETE' });
+                resetForm();
+                await Promise.all([loadCars(token), loadStats(token), loadCarBookings(token)]);
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkAuth();
+            const token = requireAdmin();
+            if (!token) return;
+
+            document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+            document.getElementById('refreshCarsBtn').addEventListener('click', async () => {
+                await Promise.all([loadCars(token), loadCarBookings(token), loadStats(token)]);
+            });
+
+            document.getElementById('carForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const payload = {
+                    car_name: document.getElementById('car_name').value.trim(),
+                    brand: document.getElementById('brand').value.trim(),
+                    price_per_day: Number(document.getElementById('price_per_day').value),
+                    type: document.getElementById('type').value,
+                    image: document.getElementById('image').value.trim(),
+                    description: document.getElementById('description').value.trim(),
+                    availability_status: document.getElementById('availability_status').value
+                };
+
+                try {
+                    if (editingCarId) {
+                        await fetchJson(`/api/admin/cars/${editingCarId}`, token, {
+                            method: 'PUT',
+                            body: JSON.stringify(payload)
+                        });
+                    } else {
+                        await fetchJson('/api/admin/cars', token, {
+                            method: 'POST',
+                            body: JSON.stringify(payload)
+                        });
+                    }
+
+                    resetForm();
+                    await Promise.all([loadCars(token), loadCarBookings(token), loadStats(token)]);
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+
+            try {
+                await Promise.all([loadStats(token), loadCars(token), loadCarBookings(token), loadBookings(token)]);
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    </script>
+</body>
+</html>

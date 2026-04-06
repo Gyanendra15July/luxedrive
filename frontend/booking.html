@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Booking | LUXEDRIVE</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .location-group { position: relative; }
+        /* Input Wrapper for Icons */
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-wrapper .input-icon {
+            position: absolute;
+            left: 1.2rem;
+            color: var(--primary);
+            font-size: 1.2rem;
+            z-index: 3;
+            pointer-events: none; /* Prevents icon from blocking clicks */
+        }
+        .input-wrapper input {
+            width: 100%;
+            position: relative;
+            z-index: 2;
+            padding-left: 3.5rem !important; /* Make room for icon */
+            padding-right: 3.5rem !important; /* Make room for button */
+            background-image: none !important; /* Disable any injected backgrounds */
+        }
+
+        /* Fix Browser Autofill Ugly Styles (Yellow/White Backgrounds) */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px var(--dark-accent) inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        
+        /* Modernized Current Location Button */
+        .current-location-btn {
+            position: absolute;
+            right: 0.8rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--primary-light);
+            cursor: pointer;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            z-index: 5;
+        }
+        .current-location-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Fix Google Autocomplete Pattern Conflicts */
+        .pac-container {
+            background-color: var(--dark-accent);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            z-index: 10000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 5px;
+        }
+        .pac-item {
+            padding: 12px 16px;
+            color: var(--light);
+            border-top: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .pac-item:hover {
+            background-color: rgba(59, 130, 246, 0.15); /* Primary tint highlight */
+            padding-left: 20px;
+        }
+        .pac-item-query { 
+            color: white; 
+            font-size: 1rem; 
+            font-weight: 600; 
+        }
+        .pac-matched { 
+            color: var(--primary-light); 
+        }
+        .pac-icon {
+            display: none; /* Removed the default broken google icon */
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo"><a href="/">LUXEDRIVE</a></div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/cars">Cars</a></li>
+            <li><a href="/contact">Contact</a></li>
+        </ul>
+        <div class="nav-btns" id="nav-auth-btns"></div>
+    </nav>
+
+    <div class="section-padding" style="margin-top: 80px;">
+        <div class="section-title fade-in">
+            <h2>Complete Your Reservation</h2>
+            <p>Review your selection and provide journey details</p>
+        </div>
+
+        <div id="booking-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 4rem; max-width: 1200px; margin: 0 auto;">
+            <div id="car-details-card" class="fade-in">
+                <!-- Dynamic car data -->
+            </div>
+            
+            <div class="form-container fade-in" style="margin: 0; max-width: 100%; animation-delay: 0.2s;">
+                <h3 style="margin-bottom: 2rem;">Journey Details</h3>
+                <form id="booking-form">
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label>Pickup Date</label>
+                            <input type="date" id="pickup_date" required min="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        <div>
+                            <label>Return Date</label>
+                            <input type="date" id="return_date" required>
+                        </div>
+                    </div>
+
+                    <!-- Pickup Location -->
+                    <div class="form-group location-group">
+                        <label for="pickup_location">Pickup Location</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-map-marker-alt input-icon"></i>
+                            <input type="text" id="pickup_location" placeholder="Enter Pickup Point (e.g., LAX Airport)" autocomplete="off" required>
+                            <button type="button" class="current-location-btn" onclick="getCurrentLocation('pickup_location')" title="Use Current Location">
+                                 <i class="fas fa-crosshairs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Destination -->
+                    <div class="form-group location-group">
+                        <label for="destination">Destination (Optional)</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-flag-checkered input-icon"></i>
+                            <input type="text" id="destination" placeholder="Where are you heading? (e.g., Hilton Beverly Hills)" autocomplete="off">
+                        </div>
+                    </div>
+                    
+                    <div id="booking-summary" style="margin-top: 2rem; padding: 2rem; background: var(--dark-accent); border-radius: 20px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; color: var(--gray);">
+                            <span>Daily Rate</span>
+                            <span id="summary-price">$0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; color: var(--gray);">
+                            <span>Duration</span>
+                            <span><span id="summary-days">0</span> Days</span>
+                        </div>
+                        <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0;">Total Amount</h3>
+                            <h2 id="summary-total" style="color: var(--primary); margin: 0;">$0</h2>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem; padding: 1.2rem;">Confirm Reservation</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places"></script>
+    <script src="/js/script.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const carId = urlParams.get('id');
+        let carPrice = 0;
+
+        /**
+         * Initialize Google Places Autocomplete safely
+         */
+        function initAutocomplete() {
+            // CRITICAL FIX: If using a placeholder key, Google Maps will crash midway through typing
+            // and lock the input field. We must abort the Autocomplete binding to allow manual typing.
+            const scriptTag = document.querySelector('script[src*="maps.googleapis.com"]');
+            if (scriptTag && scriptTag.src.includes('YOUR_GOOGLE_MAPS_API_KEY')) {
+                console.warn("Google Maps API Key is a placeholder. Autocomplete disabled. Manual typing activated.");
+                return; 
+            }
+
+            const options = { types: ['geocode', 'establishment'] };
+            const pickupInput = document.getElementById('pickup_location');
+            const destInput = document.getElementById('destination');
+
+            new google.maps.places.Autocomplete(pickupInput, options);
+            new google.maps.places.Autocomplete(destInput, options);
+        }
+
+        /**
+         * Get client GPS coordinates and reverse geocode
+         */
+        async function getCurrentLocation(id) {
+            const input = document.getElementById(id);
+            if (!navigator.geolocation) return alert("Geolocation is not supported by your browser.");
+
+            try {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Simple Reverse Geocoding with Google Maps
+                    const geocoder = new google.maps.Geocoder();
+                    const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+                    
+                    geocoder.geocode({ location: latlng }, (results, status) => {
+                        if (status === "OK" && results[0]) {
+                            input.value = results[0].formatted_address;
+                        } else {
+                            alert("Unable to find address for current location.");
+                        }
+                    });
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        async function loadCarDetails() {
+            if (!carId) return window.location.href = '/cars';
+            const response = await fetch(`/api/cars/${carId}`);
+            const car = await response.json();
+            carPrice = car.price_per_day;
+
+            document.getElementById('car-details-card').innerHTML = `
+                <div class="car-card" style="width: 100%; padding: 0; overflow: hidden;">
+                    <img src="${car.image}" alt="${car.car_name}" style="width: 100%; height: 350px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/600x400?text=${car.car_name}'">
+                    <div style="padding: 2.5rem;">
+                        <small style="color: var(--primary); font-weight: 700; text-transform: uppercase;">YOUR SELECTION</small>
+                        <h2 style="font-size: 2.5rem; margin: 0.5rem 0;">${car.car_name}</h2>
+                        <p style="color: var(--gray); font-size: 1.1rem; margin-bottom: 2rem;">${car.brand} | ${car.type}</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('summary-price').innerText = `$${carPrice}`;
+        }
+
+        const pickupInput = document.getElementById('pickup_date');
+        const returnInput = document.getElementById('return_date');
+
+        function updateSummary() {
+            if (pickupInput.value && returnInput.value) {
+                const start = new Date(pickupInput.value);
+                const end = new Date(returnInput.value);
+                if (end < start) {
+                    alert('Return date must be after pickup date');
+                    returnInput.value = '';
+                    return;
+                }
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+                document.getElementById('summary-days').innerText = diffDays;
+                document.getElementById('summary-total').innerText = `$${diffDays * carPrice}`;
+            }
+        }
+
+        pickupInput.addEventListener('change', updateSummary);
+        returnInput.addEventListener('change', updateSummary);
+
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please sign in to complete your reservation.');
+                return window.location.href = '/login';
+            }
+
+            const pickup_location = document.getElementById('pickup_location').value.trim();
+            const destination = document.getElementById('destination').value.trim();
+            const total_price = parseInt(document.getElementById('summary-total').innerText.replace('$', ''));
+
+            if (!pickup_location) return alert('Pickup location is mandatory.');
+
+            try {
+                const res = await fetch('/api/book', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        car_id: carId, 
+                        pickup_date: pickupInput.value, 
+                        return_date: returnInput.value, 
+                        total_price, 
+                        pickup_location, 
+                        destination: destination || null 
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Reservation Confirmed! Welcome to LUXEDRIVE.');
+                    window.location.href = '/dashboard';
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) { console.error(err); }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCarDetails();
+            checkAuth();
+            try { initAutocomplete(); } catch (e) { console.warn("Google Maps API likely missing key."); }
+        });
+    </script>
+</body>
+</html>

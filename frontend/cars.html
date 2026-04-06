@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Our Fleet | LuxeDrive</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">LUXEDRIVE</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/cars" class="active">Fleet</a>
+            <a href="/dashboard" id="userDashboardLink" style="display: none;">My Bookings</a>
+            <a href="/admin-dashboard" id="adminDashboardLink" style="display: none;">Admin Panel</a>
+            <a href="/login" id="loginBtn">Sign In</a>
+            <a href="#" id="logoutBtn" style="display: none;" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1 class="reveal">Our Premium Fleet</h1>
+        <p class="reveal">Select from our collection of world-class vehicles</p>
+    </header>
+
+    <div class="container">
+        <div class="search-filter-section reveal">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search by brand or model...">
+            </div>
+            <div class="filter-group">
+                <label for="categoryFilter"><i class="fas fa-filter"></i> Category:</label>
+                <select id="categoryFilter">
+                    <option value="all">All Vehicles</option>
+                    <option value="Luxury">Luxury</option>
+                    <option value="SUV">SUV</option>
+                    <option value="Sports">Sports</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="carList" class="car-grid">
+            <!-- Cars will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">LUXEDRIVE</div>
+            <p>Experience the ultimate in luxury car rentals.</p>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 LuxeDrive. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchCars();
+            checkAuth();
+        });
+
+        async function fetchCars() {
+            try {
+                const response = await fetch('/api/cars');
+                const cars = await response.json();
+                
+                if (!Array.isArray(cars)) {
+                    document.getElementById('carList').innerHTML = '<div style="grid-column: 1/-1; text-align: center;"><p>Database connection required to display cars.</p></div>';
+                    return;
+                }
+
+                const searchEl = document.getElementById('searchInput');
+                const categoryEl = document.getElementById('categoryFilter');
+
+                const applyFilters = () => {
+                    const term = (searchEl.value || '').toLowerCase().trim();
+                    const val = categoryEl.value;
+
+                    const filtered = cars.filter((c) => {
+                        const matchesTerm = !term
+                            || String(c.car_name || '').toLowerCase().includes(term)
+                            || String(c.brand || '').toLowerCase().includes(term);
+
+                        const matchesCategory = val === 'all' || c.type === val;
+                        return matchesTerm && matchesCategory;
+                    });
+
+                    renderCars(filtered);
+                };
+
+                searchEl.addEventListener('input', applyFilters);
+                categoryEl.addEventListener('change', applyFilters);
+
+                applyFilters();
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('carList').innerHTML = '<div style="grid-column: 1/-1; text-align: center;"><p>Failed to connect to the fleet database.</p></div>';
+            }
+        }
+
+        function renderCars(cars) {
+            const carGrid = document.getElementById('carList');
+            carGrid.innerHTML = cars.map(car => `
+                <div class="car-card">
+                    <img src="${car.image}" alt="${car.car_name}" class="car-img" onerror="this.src='https://via.placeholder.com/300x200?text=Premium+Car'">
+                    <div class="car-info">
+                        <h3>${car.car_name}</h3>
+                        <div class="car-meta">
+                            <span>${car.brand}</span>
+                            <span>${car.type}</span>
+                        </div>
+                        <div class="car-price">$${car.price_per_day} / day</div>
+                        <a href="/booking?id=${car.id}" class="btn btn-primary" style="display: block; text-align: center; margin-top: 1rem;">View Details</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

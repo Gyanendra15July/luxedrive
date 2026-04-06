@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUXEDRIVE | Premium Car Booking System</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">LUXEDRIVE</div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/cars">Cars</a></li>
+            <li><a href="/contact">Contact</a></li>
+        </ul>
+        <div class="nav-btns" id="nav-auth-btns">
+            <a href="/login" class="btn btn-outline">Login</a>
+            <a href="/register" class="btn btn-primary">Sign Up</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="fade-in">
+            <h1>Drive Your Dreams <br>In Absolute Luxury</h1>
+            <p>Experience the ultimate in automotive excellence. We provide a curated fleet of the world's most prestigious vehicles for your journey.</p>
+            <div class="hero-btns">
+                <a href="/cars" class="btn btn-primary">Explore Fleet</a>
+                <a href="/contact" class="btn btn-outline" style="margin-left: 1rem;">Contact Us</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="section-padding reveal">
+        <div class="section-title">
+            <h2>Our Featured Fleet</h2>
+            <p>Hand-picked luxury vehicles maintained to perfection</p>
+        </div>
+        <div class="car-grid" id="featured-cars">
+            <!-- Cars will be loaded here via JS -->
+        </div>
+    </section>
+
+    <section class="section-padding reveal" style="background: var(--dark-accent);">
+        <div class="section-title">
+            <h2>The LUXEDRIVE Experience</h2>
+            <p>Why we are the preferred choice for premium rentals</p>
+        </div>
+        <div class="car-grid">
+            <div class="car-card">
+                <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1.5rem;">💎</div>
+                <h3>Premium Selection</h3>
+                <p>Access an exclusive collection of luxury sedans, sports cars, and premium SUVs.</p>
+            </div>
+            <div class="car-card">
+                <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1.5rem;">🛡️</div>
+                <h3>Fully Insured</h3>
+                <p>Every rental comes with comprehensive premium insurance for your peace of mind.</p>
+            </div>
+            <div class="car-card">
+                <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1.5rem;">⚡</div>
+                <h3>Fast Booking</h3>
+                <p>Our seamless digital process ensures you get from browsing to driving in minutes.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-padding reveal">
+        <div class="section-title">
+            <h2>What Our Clients Say</h2>
+            <p>Testimonials from our satisfied luxury travelers</p>
+        </div>
+        <div class="car-grid">
+            <div class="car-card">
+                <p style="font-style: italic; color: var(--gray); margin-bottom: 1.5rem;">"The Tesla Model S was in immaculate condition. The delivery was on time and the service was truly premium."</p>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary-light);"></div>
+                    <div>
+                        <h4 style="margin: 0;">James Wilson</h4>
+                        <small style="color: var(--primary);">CEO, TechFlow</small>
+                    </div>
+                </div>
+            </div>
+            <div class="car-card">
+                <p style="font-style: italic; color: var(--gray); margin-bottom: 1.5rem;">"Booking a BMW M4 for my weekend trip was the best decision. Smooth process and incredible car performance."</p>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary-light);"></div>
+                    <div>
+                        <h4 style="margin: 0;">Sarah Jenkins</h4>
+                        <small style="color: var(--primary);">Architect</small>
+                    </div>
+                </div>
+            </div>
+            <div class="car-card">
+                <p style="font-style: italic; color: var(--gray); margin-bottom: 1.5rem;">"LUXEDRIVE provides a level of service that matches the quality of their vehicles. Highly recommended."</p>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary-light);"></div>
+                    <div>
+                        <h4 style="margin: 0;">Michael Chen</h4>
+                        <small style="color: var(--primary);">Entrepreneur</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="logo">LUXEDRIVE</div>
+                <p style="margin-top: 1.5rem;">Defining the future of luxury car rentals. Experience excellence on every journey.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="/cars">Our Fleet</a></li>
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Sign Up</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="/contact">Contact Support</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Connect</h4>
+                <p>Email: concierge@luxedrive.com</p>
+                <p>Phone: +1 (800) LUXE-DRIV</p>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                    <!-- Social icons placeholder -->
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 LUXEDRIVE Car Booking System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+</body>
+</html>
