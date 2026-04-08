@@ -23,7 +23,7 @@ exports.register = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const [result] = await db.execute(
-            'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+            'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
             [name, email, hashedPassword, userRole]
         );
 
@@ -38,42 +38,32 @@ exports.register = async (req, res) => {
 // POST /api/login
 exports.login = async (req, res) => {
     try {
-        // 1. Debug logs for incoming request
-        console.log('[LOGIN ATTEMPT] Body:', { ...req.body, password: '***' });
-
         const { email, password } = req.body;
 
-        // 2. Input Validation (Prevent undefined password)
         if (!email || !password) {
-            console.warn('[LOGIN FAIL] Missing email or password');
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
         // 3. Database Query
         const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
         
-        // 4. Detailed Debug logs for Query result
-        console.log('[LOGIN DB RESULT] Rows found:', users.length);
-
         if (users.length === 0) {
-            return res.status(401).json({ message: 'Invalid email or password' }); // Generic message for security
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
 
         const user = users[0];
+        console.log('[DEBUG] User loaded:', { ...user, password_hash: '***' });
         
-        // 5. Final safety check before bcrypt.compare
-        // This prevents the "Illegal arguments: string, undefined" error
-        if (!user.password || typeof password !== 'string') {
-            console.error('[CRITICAL] Password data is invalid or missing in DB/Request');
-            console.log('[DEBUG] User object keys:', Object.keys(user));
-            return res.status(500).json({ message: 'Internal authentication error' });
+        // 5. Safety check before bcrypt.compare
+        if (!user.password_hash) {
+            console.error('[CRITICAL] password_hash column is missing or empty in DB');
+            return res.status(500).json({ message: 'Database configuration error: Password missing' });
         }
 
-        // 6. Safe bcrypt.compare
-        const isMatch = await bcrypt.compare(password, user.password);
+        // 6. Safe bcrypt.compare using the correct column name
+        const isMatch = await bcrypt.compare(password, user.password_hash);
         
         if (!isMatch) {
-            console.warn(`[LOGIN FAIL] Password mismatch for: ${email}`);
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
@@ -84,7 +74,6 @@ exports.login = async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        console.log(`[LOGIN SUCCESS] ${email} (${user.role})`);
         res.json({
             token,
             user: {
@@ -95,12 +84,8 @@ exports.login = async (req, res) => {
             }
         });
     } catch (error) {
-        // Improved error logging
         console.error('[LOGIN SYSTEM ERROR]', error);
-        res.status(500).json({ 
-            message: 'An unexpected error occurred during login',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        res.status(500).json({ message: 'An unexpected error occurred during login' });
     }
 };
 
