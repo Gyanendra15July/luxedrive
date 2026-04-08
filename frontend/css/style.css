@@ -80,28 +80,31 @@ nav {
 .logo {
     display: flex;
     align-items: center;
-    font-size: 1.6rem;
+    font-size: 1.7rem;
     font-weight: 900;
-    letter-spacing: -.02em;
+    letter-spacing: -.03em;
     cursor: pointer;
     transition: var(--transition);
+    user-select: none;
 }
 
 .logo a {
     display: flex;
-    background: transparent;
-    -webkit-background-clip: initial;
-    -webkit-text-fill-color: initial;
+    align-items: center;
+    text-decoration: none;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: initial !important;
 }
 
 .logo span {
     display: inline-block;
     background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-text-fill-color: transparent !important;
     background-clip: text;
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
     animation: logoReveal 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
