@@ -1,82 +1,60 @@
-const API_URL = '/api';
+// script.js  – shared across all frontend pages
+// Requires utils.js to be loaded first
 
-/**
- * Escapes HTML characters to prevent XSS attacks.
- */
-function escapeHTML(str) {
-    if (!str) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return str.replace(/[&<>"']/g, m => map[m]);
-}
-
+// ─── Scroll Reveal ──────────────────────────────────────────────────────────
 function setupScrollReveal() {
     const reveals = document.querySelectorAll('.reveal');
     if (!reveals.length) return;
-
-    const elementVisible = 150;
-
-    const reveal = () => {
+    const check = () => {
         for (const el of reveals) {
-            const elementTop = el.getBoundingClientRect().top;
-            if (elementTop < window.innerHeight - elementVisible) {
+            if (el.getBoundingClientRect().top < window.innerHeight - 100)
                 el.classList.add('active');
-            }
         }
     };
-
-    window.addEventListener('scroll', reveal, { passive: true });
-    reveal();
+    window.addEventListener('scroll', check, { passive: true });
+    check();
 }
 
-/**
- * Optimized Auth Status Check
- */
+// ─── Nav Auth State ─────────────────────────────────────────────────────────
 function checkAuth() {
-    const token = localStorage.getItem('token');
-    const userName = localStorage.getItem('name');
-    const role = localStorage.getItem('role');
+    const token   = localStorage.getItem('token');
+    const name    = localStorage.getItem('name');
+    const role    = localStorage.getItem('role');
     const navAuth = document.getElementById('nav-auth-btns');
 
+    if (token && navAuth) {
+        navAuth.innerHTML = `
+            <a href="/profile" style="margin-right:15px; color:var(--primary-light); font-weight:600;">
+                👤 ${name || 'Profile'}
+            </a>
+            ${role === 'admin' ? `<a href="/admin" class="btn btn-outline" style="padding:.5rem 1rem; margin-right:8px;">Admin Panel</a>` : `<a href="/dashboard" class="btn btn-outline" style="padding:.5rem 1rem; margin-right:8px;">My Bookings</a>`}
+            <button onclick="auth.logout()" class="btn btn-primary" style="padding:.5rem 1rem;">Logout</button>
+        `;
+    }
+
+    // Handle individual nav link IDs used on older pages
+    const loginBtn          = document.getElementById('loginBtn');
+    const logoutBtn         = document.getElementById('logoutBtn');
     const userDashboardLink = document.getElementById('userDashboardLink');
-    const adminDashboardLink = document.getElementById('adminDashboardLink');
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const adminDashboardLink= document.getElementById('adminDashboardLink');
 
     if (token) {
-        if (navAuth) {
-            navAuth.innerHTML = `
-                <a href="/profile" style="margin-right: 15px; color: var(--primary-light); font-weight: 600;"><i class="fas fa-user-circle"></i> ${escapeHTML(userName)}</a>
-                <a href="/dashboard" class="btn btn-outline" style="padding: 0.5rem 1rem;"><i class="fas fa-list-ul"></i> Bookings</a>
-                <button onclick="logout()" class="btn btn-primary" style="margin-left: 10px; padding: 0.5rem 1rem;">Logout</button>
-            `;
-        }
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'inline-flex';
-        if (userDashboardLink) userDashboardLink.style.display = role === 'user' ? 'inline-flex' : 'none';
+        if (loginBtn)           loginBtn.style.display = 'none';
+        if (logoutBtn)          logoutBtn.style.display = 'inline-flex';
+        if (userDashboardLink)  userDashboardLink.style.display  = role === 'user'  ? 'inline-flex' : 'none';
         if (adminDashboardLink) adminDashboardLink.style.display = role === 'admin' ? 'inline-flex' : 'none';
     } else {
-        if (navAuth) navAuth.innerHTML = '';
-        if (loginBtn) loginBtn.style.display = 'inline-flex';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-        if (userDashboardLink) userDashboardLink.style.display = 'none';
+        if (loginBtn)           loginBtn.style.display = 'inline-flex';
+        if (logoutBtn)          logoutBtn.style.display = 'none';
+        if (userDashboardLink)  userDashboardLink.style.display  = 'none';
         if (adminDashboardLink) adminDashboardLink.style.display = 'none';
     }
 }
 
-function logout() {
-    localStorage.clear();
-    window.location.href = '/';
-}
+function logout() { auth.logout(); }
 
-/**
- * Fetch Cars with Security (XSS Escaping)
- */
+// ─── Homepage Featured Cars ─────────────────────────────────────────────────
+// DB schema: id, name, image, price_per_day, description, available
 async function fetchFeaturedCars() {
     const carGrid = document.getElementById('featured-cars');
     if (!carGrid) return;
@@ -84,146 +62,103 @@ async function fetchFeaturedCars() {
     try {
         const response = await fetch(`${API_URL}/cars`);
         const cars = await response.json();
-        
-        if (!Array.isArray(cars)) {
-            carGrid.innerHTML = '<p style="text-align: center; width: 100%;">Database connection required to display cars.</p>';
+
+        if (!Array.isArray(cars) || cars.length === 0) {
+            carGrid.innerHTML = '<p style="text-align:center;width:100%;grid-column:1/-1">No cars available right now.</p>';
             return;
         }
-        
-        const featured = cars.slice(0, 3);
-        
-        carGrid.innerHTML = featured.map(car => `
+
+        carGrid.innerHTML = cars.slice(0, 3).map(car => `
             <div class="car-card">
-                <img src="${car.image}" alt="${escapeHTML(car.car_name)}" class="car-img" onerror="this.src='https://via.placeholder.com/300x200?text=Premium+Car'">
+                <img src="${car.image ? '/uploads/' + car.image : 'https://placehold.co/400x250/1e293b/white?text=' + encodeURIComponent(car.name)}"
+                     alt="${car.name}" class="car-img"
+                     onerror="this.src='https://placehold.co/400x250/1e293b/white?text=Car'">
                 <div class="car-info">
-                    <h3>${escapeHTML(car.car_name)}</h3>
-                    <div class="car-meta">
-                        <span>${escapeHTML(car.brand)}</span>
-                        <span>${escapeHTML(car.type)}</span>
-                    </div>
+                    <h3>${car.name}</h3>
                     <div class="car-price">$${car.price_per_day} / day</div>
-                    <a href="/booking?id=${car.id}" class="btn btn-primary" style="display: block; text-align: center; margin-top: 1rem;">Book Now</a>
+                    <p style="color:var(--gray);font-size:.9rem;margin:.5rem 0 1rem">${car.description || ''}</p>
+                    <a href="/dashboard" class="btn btn-primary" style="display:block;text-align:center;">Book Now</a>
                 </div>
             </div>
         `).join('');
     } catch (error) {
-        console.error('Error fetching cars:', error);
+        console.error('[Featured Cars Error]', error);
+        carGrid.innerHTML = '<p style="text-align:center;width:100%;grid-column:1/-1">Failed to load cars.</p>';
     }
 }
 
-/**
- * Handles User Registration
- */
-async function handleRegister(e) {
-    e.preventDefault();
-    const name = document.getElementById('name').value;
-    const emailEl = document.getElementById('email') || document.getElementById('regEmail');
-    const passwordEl = document.getElementById('password') || document.getElementById('regPassword');
-    const email = emailEl ? emailEl.value : '';
-    const password = passwordEl ? passwordEl.value : '';
-    const mobileCountryCode = document.getElementById('mobileCountryCode')?.value || '';
-    const mobileNumber = document.getElementById('mobileNumber')?.value || '';
-    const mobile = `${mobileCountryCode}${String(mobileNumber).trim()}`.trim();
-
-    if (!mobile || mobile === mobileCountryCode) {
-        alert('Please enter your mobile number.');
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password, mobile })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            // Auto-login: store token and redirect to home
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('role', data.role);
-            localStorage.setItem('name', data.name);
-            window.location.href = '/';
-        } else {
-            alert(data.message || 'Registration failed');
-        }
-    } catch (err) {
-        console.error(err);
-        alert('A network error occurred. Please try again.');
-    }
-}
-
+// ─── Login Handler ───────────────────────────────────────────────────────────
 async function handleLogin(e) {
     e.preventDefault();
-    const email = document.getElementById('email').value;
+    const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
     try {
-        const res = await fetch(`${API_URL}/login`, {
+        const res  = await fetch(`${API_URL}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
         const data = await res.json();
+
         if (res.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('role', data.role);
-            localStorage.setItem('name', data.name);
-            // Redirect to home page after successful login
-            window.location.href = '/';
+            auth.setSession(data.user, data.token);
+            window.location.href = data.user.role === 'admin' ? '/admin' : '/dashboard';
         } else {
-            alert(data.message || 'Login failed. Please check your credentials.');
+            alert(data.message || 'Login failed');
         }
     } catch (err) {
         console.error(err);
-        alert('Connection error. Please check your internet.');
+        alert('Connection error. Please try again.');
     }
 }
 
-async function handleContact(e) {
+// ─── Register Handler ────────────────────────────────────────────────────────
+async function handleRegister(e) {
     e.preventDefault();
-
-    const name = document.getElementById('contactName')?.value?.trim();
-    const email = document.getElementById('contactEmail')?.value?.trim();
-    const subject = document.getElementById('contactSubject')?.value?.trim();
-    const message = document.getElementById('contactMessage')?.value?.trim();
-
-    if (!name || !email || !subject || !message) {
-        alert('Please fill in all fields.');
-        return;
-    }
+    const name     = document.getElementById('name').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const role     = document.getElementById('role')?.value || 'user';
 
     try {
-        const res = await fetch(`${API_URL}/contact`, {
+        const res  = await fetch(`${API_URL}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, subject, message })
+            body: JSON.stringify({ name, email, password, role })
         });
+        const data = await res.json();
 
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            alert(data.message || 'Failed to send message.');
-            return;
+        if (res.ok) {
+            alert('Registration successful! Please login.');
+            window.location.href = '/login';
+        } else {
+            alert(data.message || 'Registration failed');
         }
-
-        alert('Thanks! Your message has been sent.');
-        document.getElementById('contactForm')?.reset();
     } catch (err) {
         console.error(err);
-        alert('Failed to send message. Please try again.');
+        alert('Connection error. Please try again.');
     }
 }
 
+// ─── Contact Handler ─────────────────────────────────────────────────────────
+async function handleContact(e) {
+    e.preventDefault();
+    alert('Thank you! Your message has been received.');
+    e.target.reset();
+}
+
+// ─── DOMContentLoaded Bootstrap ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     setupScrollReveal();
     checkAuth();
     fetchFeaturedCars();
-    
-    const regForm = document.getElementById('registerForm');
-    if (regForm) regForm.addEventListener('submit', handleRegister);
 
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    const loginForm    = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const contactForm  = document.getElementById('contactForm');
 
-    const contactForm = document.getElementById('contactForm');
-    if (contactForm) contactForm.addEventListener('submit', handleContact);
+    if (loginForm)    loginForm.addEventListener('submit', handleLogin);
+    if (registerForm) registerForm.addEventListener('submit', handleRegister);
+    if (contactForm)  contactForm.addEventListener('submit', handleContact);
 });

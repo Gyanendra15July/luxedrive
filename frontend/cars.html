@@ -3,124 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore Our Fleet | LuxeDrive</title>
+    <title>Explore Fleet – LuxeDrive</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .page-header { background: var(--dark); color: #fff; text-align: center; padding: 4rem 1rem 3rem; }
+        .page-header h1 { font-size: 2.5rem; margin-bottom: .5rem; }
+        .page-header p  { color: #94a3b8; }
+        .search-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 2rem auto; max-width: 800px; padding: 0 1rem; }
+        .search-bar input  { flex: 1; padding: .75rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 1rem; min-width: 200px; }
+        .search-bar input:focus { outline: none; border-color: var(--primary); }
+        .search-bar select { padding: .75rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 1rem; }
+        .car-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 2rem; padding: 1rem 2rem 4rem; max-width: 1200px; margin: 0 auto; }
+        .car-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.08); transition: transform .3s, box-shadow .3s; }
+        .car-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,.15); }
+        .car-card img { width: 100%; height: 200px; object-fit: cover; }
+        .car-info { padding: 1.25rem; }
+        .car-info h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+        .car-price { font-size: 1.1rem; color: var(--primary); font-weight: 700; margin: .5rem 0 1rem; }
+        .car-desc  { font-size: .85rem; color: #64748b; margin-bottom: 1rem; }
+        .availability { display: inline-block; padding: .25rem .75rem; border-radius: 20px; font-size: .75rem; font-weight: 700; margin-bottom: 1rem; }
+        .avail-true  { background: #dcfce7; color: #166534; }
+        .avail-false { background: #fee2e2; color: #991b1b; }
+        .empty-state { grid-column: 1/-1; text-align: center; padding: 4rem 1rem; color: #64748b; }
+        .empty-state h3 { font-size: 1.5rem; margin-bottom: .5rem; }
+    </style>
 </head>
 <body>
     <nav>
-        <div class="logo">LUXEDRIVE</div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/cars" class="active">Fleet</a>
-            <a href="/dashboard" id="userDashboardLink" style="display: none;">My Bookings</a>
-            <a href="/admin-dashboard" id="adminDashboardLink" style="display: none;">Admin Panel</a>
-            <a href="/login" id="loginBtn">Sign In</a>
-            <a href="#" id="logoutBtn" style="display: none;" onclick="logout()">Logout</a>
-        </div>
+        <div class="logo"><a href="/" style="text-decoration:none;color:inherit">LUXEDRIVE</a></div>
+        <ul class="nav-links" style="list-style:none;display:flex;gap:1.5rem;align-items:center;">
+            <li><a href="/">Home</a></li>
+            <li><a href="/cars" style="color:var(--primary);font-weight:700">Fleet</a></li>
+            <li><a href="/dashboard" id="userDashboardLink"  style="display:none">My Bookings</a></li>
+            <li><a href="/admin"     id="adminDashboardLink" style="display:none">Admin Panel</a></li>
+            <li><a href="/login" id="loginBtn">Sign In</a></li>
+            <li><a href="#" id="logoutBtn" style="display:none" onclick="auth.logout()">Logout</a></li>
+        </ul>
     </nav>
 
-    <header class="page-header">
-        <h1 class="reveal">Our Premium Fleet</h1>
-        <p class="reveal">Select from our collection of world-class vehicles</p>
-    </header>
-
-    <div class="container">
-        <div class="search-filter-section reveal">
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search by brand or model...">
-            </div>
-            <div class="filter-group">
-                <label for="categoryFilter"><i class="fas fa-filter"></i> Category:</label>
-                <select id="categoryFilter">
-                    <option value="all">All Vehicles</option>
-                    <option value="Luxury">Luxury</option>
-                    <option value="SUV">SUV</option>
-                    <option value="Sports">Sports</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="carList" class="car-grid">
-            <!-- Cars will be loaded here dynamically -->
-        </div>
+    <div class="page-header">
+        <h1>🚗 Our Premium Fleet</h1>
+        <p>Select from our world-class vehicles</p>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <div class="footer-logo">LUXEDRIVE</div>
-            <p>Experience the ultimate in luxury car rentals.</p>
-        </div>
-        <div class="footer-bottom">
-            &copy; 2026 LuxeDrive. All rights reserved.
-        </div>
-    </footer>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by name or description…">
+        <select id="priceFilter">
+            <option value="all">All Prices</option>
+            <option value="low">Under $100/day</option>
+            <option value="mid">$100–$200/day</option>
+            <option value="high">Above $200/day</option>
+        </select>
+        <select id="availFilter">
+            <option value="all">All</option>
+            <option value="1">Available Only</option>
+        </select>
+    </div>
 
+    <div class="car-grid" id="carGrid">
+        <div class="empty-state"><p>Loading fleet…</p></div>
+    </div>
+
+    <script src="/js/utils.js"></script>
     <script src="/js/script.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchCars();
-            checkAuth();
-        });
+        let allCars = [];
 
-        async function fetchCars() {
+        async function loadFleet() {
+            const grid = document.getElementById('carGrid');
             try {
-                const response = await fetch('/api/cars');
-                const cars = await response.json();
-                
+                const res = await fetch(`${API_URL}/cars`);
+                if (!res.ok) throw new Error(`Server error ${res.status}`);
+                const cars = await res.json();
+
                 if (!Array.isArray(cars)) {
-                    document.getElementById('carList').innerHTML = '<div style="grid-column: 1/-1; text-align: center;"><p>Database connection required to display cars.</p></div>';
+                    grid.innerHTML = '<div class="empty-state"><h3>⚠ Server Error</h3><p>Could not load cars. Please refresh.</p></div>';
                     return;
                 }
-
-                const searchEl = document.getElementById('searchInput');
-                const categoryEl = document.getElementById('categoryFilter');
-
-                const applyFilters = () => {
-                    const term = (searchEl.value || '').toLowerCase().trim();
-                    const val = categoryEl.value;
-
-                    const filtered = cars.filter((c) => {
-                        const matchesTerm = !term
-                            || String(c.car_name || '').toLowerCase().includes(term)
-                            || String(c.brand || '').toLowerCase().includes(term);
-
-                        const matchesCategory = val === 'all' || c.type === val;
-                        return matchesTerm && matchesCategory;
-                    });
-
-                    renderCars(filtered);
-                };
-
-                searchEl.addEventListener('input', applyFilters);
-                categoryEl.addEventListener('change', applyFilters);
-
+                allCars = cars;
                 applyFilters();
-
-            } catch (error) {
-                console.error(error);
-                document.getElementById('carList').innerHTML = '<div style="grid-column: 1/-1; text-align: center;"><p>Failed to connect to the fleet database.</p></div>';
+            } catch (err) {
+                console.error('[Fleet Error]', err);
+                grid.innerHTML = `<div class="empty-state"><h3>Connection Error</h3><p>${err.message}</p></div>`;
             }
         }
 
+        function applyFilters() {
+            const term   = document.getElementById('searchInput').value.toLowerCase();
+            const price  = document.getElementById('priceFilter').value;
+            const avail  = document.getElementById('availFilter').value;
+
+            const filtered = allCars.filter(c => {
+                const matchTerm  = !term || c.name.toLowerCase().includes(term) || (c.description||'').toLowerCase().includes(term);
+                const p = parseFloat(c.price_per_day);
+                const matchPrice = price === 'all' ||
+                    (price === 'low'  && p < 100)   ||
+                    (price === 'mid'  && p >= 100 && p <= 200) ||
+                    (price === 'high' && p > 200);
+                const matchAvail = avail === 'all' || String(c.available) === avail || c.available == avail;
+                return matchTerm && matchPrice && matchAvail;
+            });
+
+            renderCars(filtered);
+        }
+
         function renderCars(cars) {
-            const carGrid = document.getElementById('carList');
-            carGrid.innerHTML = cars.map(car => `
+            const grid = document.getElementById('carGrid');
+            if (!cars.length) {
+                grid.innerHTML = '<div class="empty-state"><h3>No Cars Found</h3><p>Try adjusting your filters.</p></div>';
+                return;
+            }
+            const isLoggedIn = auth.isLoggedIn();
+            grid.innerHTML = cars.map(car => `
                 <div class="car-card">
-                    <img src="${car.image}" alt="${car.car_name}" class="car-img" onerror="this.src='https://via.placeholder.com/300x200?text=Premium+Car'">
+                    <img src="${car.image ? '/uploads/' + car.image : 'https://placehold.co/400x250/1e293b/white?text=' + encodeURIComponent(car.name)}"
+                         alt="${car.name}"
+                         onerror="this.src='https://placehold.co/400x250/1e293b/white?text=Car'">
                     <div class="car-info">
-                        <h3>${car.car_name}</h3>
-                        <div class="car-meta">
-                            <span>${car.brand}</span>
-                            <span>${car.type}</span>
-                        </div>
+                        <h3>${car.name}</h3>
                         <div class="car-price">$${car.price_per_day} / day</div>
-                        <a href="/booking?id=${car.id}" class="btn btn-primary" style="display: block; text-align: center; margin-top: 1rem;">View Details</a>
+                        <p class="car-desc">${car.description || 'Premium vehicle available for booking.'}</p>
+                        <span class="availability ${car.available ? 'avail-true' : 'avail-false'}">
+                            ${car.available ? '✓ Available' : '✗ Unavailable'}
+                        </span>
+                        <br>
+                        ${isLoggedIn
+                            ? `<a href="/dashboard" class="btn btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:.5rem">Book Now</a>`
+                            : `<a href="/login" class="btn btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:.5rem">Login to Book</a>`
+                        }
                     </div>
                 </div>
             `).join('');
         }
+
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('priceFilter').addEventListener('change', applyFilters);
+        document.getElementById('availFilter').addEventListener('change', applyFilters);
+
+        loadFleet();
     </script>
 </body>
 </html>

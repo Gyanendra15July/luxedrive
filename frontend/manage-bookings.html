@@ -3,79 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Bookings - LuxeDrive</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Manage Bookings – LuxeDrive</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { background: #f1f5f9; display: flex; font-family: 'Inter', system-ui, sans-serif; }
+        .sidebar { width: 250px; min-height: 100vh; background: var(--dark); color: #fff; padding: 1.5rem 1rem; flex-shrink: 0; }
+        .sidebar .logo { font-size: 1.3rem; font-weight: 800; margin-bottom: .25rem; background: linear-gradient(to right, #60a5fa, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .sidebar .role-tag { font-size: .75rem; color: #64748b; margin-bottom: 2rem; }
+        .sidebar a { display: block; padding: .7rem 1rem; color: #94a3b8; text-decoration: none; border-radius: 8px; margin-bottom: .4rem; font-weight: 500; transition: all .2s; }
+        .sidebar a:hover, .sidebar a.active { background: var(--primary); color: #fff; }
+        .sidebar .logout { color: #ef4444; }
+        .sidebar .logout:hover { background: rgba(239,68,68,.15); color: #ef4444; }
+        .main { flex: 1; padding: 2rem; }
+        .page-title { font-size: 1.8rem; font-weight: 800; color: var(--dark); margin-bottom: 1.5rem; }
+        .card { background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,.07); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: .85rem 1rem; background: #f8fafc; color: #475569; font-size: .82rem; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+        td { padding: .85rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: .9rem; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8fafc; }
+        .badge { display: inline-block; padding: .25rem .75rem; border-radius: 20px; font-size: .78rem; font-weight: 700; }
+        .badge-pending   { background: #fef3c7; color: #92400e; }
+        .badge-approved  { background: #dcfce7; color: #166534; }
+        .badge-rejected  { background: #fee2e2; color: #991b1b; }
+        .badge-cancelled { background: #f1f5f9; color: #475569; }
+        .action-btns { display: flex; gap: .4rem; flex-wrap: wrap; }
+        .btn-approve { padding: .35rem .8rem; background: #dcfce7; color: #166534; border: none; border-radius: 6px; font-size: .8rem; font-weight: 700; cursor: pointer; transition: background .2s; }
+        .btn-approve:hover { background: #22c55e; color: #fff; }
+        .btn-reject  { padding: .35rem .8rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 6px; font-size: .8rem; font-weight: 700; cursor: pointer; transition: background .2s; }
+        .btn-reject:hover  { background: #ef4444; color: #fff; }
+        .empty-state { text-align: center; padding: 3rem; color: #94a3b8; }
+    </style>
 </head>
 <body>
-    <div class="dashboard-layout">
-        <div class="sidebar">
-            <h2 class="logo">LuxeDrive Admin</h2>
-            <ul class="sidebar-menu">
-                <li><a href="admin.html">Manage Cars</a></li>
-                <li><a href="manage-bookings.html" class="active">Manage Bookings</a></li>
-                <li><a href="#" onclick="auth.logout()">Logout</a></li>
-            </ul>
-        </div>
-        <div class="main-content">
-            <header style="background:transparent; padding:0; box-shadow:none; margin-bottom:30px;">
-                <h1>Manage Bookings</h1>
-            </header>
+    <div class="sidebar">
+        <div class="logo">LUXEDRIVE</div>
+        <div class="role-tag">Admin Panel</div>
+        <a href="/admin">🚗 Manage Cars</a>
+        <a href="/manage-bookings" class="active">📋 Manage Bookings</a>
+        <a href="/" class="logout" onclick="auth.logout()">🚪 Logout</a>
+    </div>
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Car</th>
-                            <th>Dates</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bookingTableBody">
-                        <!-- Bookings loaded via JS -->
-                    </tbody>
-                </table>
-            </div>
+    <div class="main">
+        <h1 class="page-title">📋 Manage Bookings</h1>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Car</th>
+                        <th>Dates</th>
+                        <th>Price/Day</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="bookingBody">
+                    <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <script src="js/utils.js"></script>
+    <script src="/js/utils.js"></script>
     <script>
-        protectRoute(true);
+        if (!auth.requireAdmin()) { /* redirected */ }
 
         async function loadBookings() {
-            const res = await fetch(`${API_URL}/all-bookings`, {
-                headers: { 'Authorization': `Bearer ${auth.getToken()}` }
-            });
-            const bookings = await res.json();
-            const body = document.getElementById('bookingTableBody');
-            body.innerHTML = bookings.map(b => `
-                <tr>
-                    <td>${b.user_name}</td>
-                    <td>${b.car_name}</td>
-                    <td>${new Date(b.start_date).toLocaleDateString()} to ${new Date(b.end_date).toLocaleDateString()}</td>
-                    <td><span class="status-badge status-${b.status}">${b.status.toUpperCase()}</span></td>
-                    <td>
-                        ${b.status === 'pending' ? `
-                            <button class="btn btn-primary" style="width:auto; padding:5px 10px; margin-right:5px; background:var(--success);" onclick="updateStatus(${b.id}, 'approved')">Approve</button>
-                            <button class="btn btn-danger" style="width:auto; padding:5px 10px;" onclick="updateStatus(${b.id}, 'rejected')">Reject</button>
-                        ` : '--'}
-                    </td>
-                </tr>
-            `).join('');
+            const tbody = document.getElementById('bookingBody');
+            try {
+                const res = await fetch(`${API_URL}/all-bookings`, {
+                    headers: { 'Authorization': `Bearer ${auth.getToken()}` }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const bookings = await res.json();
+
+                if (!Array.isArray(bookings) || !bookings.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No bookings found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = bookings.map(b => `
+                    <tr>
+                        <td>${b.id}</td>
+                        <td>
+                            <strong>${b.user_name}</strong><br>
+                            <small style="color:#64748b">${b.user_email}</small>
+                        </td>
+                        <td><strong>${b.car_name}</strong></td>
+                        <td>
+                            ${new Date(b.start_date).toLocaleDateString()}<br>
+                            <small style="color:#64748b">→ ${new Date(b.end_date).toLocaleDateString()}</small>
+                        </td>
+                        <td>$${b.price_per_day}</td>
+                        <td><span class="badge badge-${b.status}">${b.status.toUpperCase()}</span></td>
+                        <td>
+                            ${b.status === 'pending' ? `
+                                <div class="action-btns">
+                                    <button class="btn-approve" onclick="updateStatus(${b.id},'approved')">Approve</button>
+                                    <button class="btn-reject"  onclick="updateStatus(${b.id},'rejected')">Reject</button>
+                                </div>
+                            ` : '<span style="color:#94a3b8;font-size:.85rem">—</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('[Bookings]', err);
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color:#ef4444">Error: ${err.message}</td></tr>`;
+            }
         }
 
         async function updateStatus(id, status) {
-            const res = await fetch(`${API_URL}/booking/${id}/status`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${auth.getToken()}` 
-                },
-                body: JSON.stringify({ status })
-            });
-            if (res.ok) loadBookings();
+            try {
+                const res = await fetch(`${API_URL}/booking/${id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${auth.getToken()}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+                if (res.ok) loadBookings();
+                else { const d = await res.json(); alert('❌ ' + d.message); }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
         }
 
         loadBookings();

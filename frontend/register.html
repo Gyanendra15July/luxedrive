@@ -3,65 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - LuxeDrive</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Register – LuxeDrive</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--dark); }
+        .auth-box { background: var(--white); padding: 2.5rem; border-radius: 16px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+        .auth-box h2 { text-align: center; margin-bottom: 1.5rem; font-size: 1.8rem; color: var(--dark); }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: .4rem; font-weight: 600; font-size: .9rem; color: var(--secondary); }
+        .form-group input, .form-group select { width: 100%; padding: .75rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 1rem; transition: border-color .3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary); }
+        .btn { width: 100%; padding: .85rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all .3s; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .auth-link { text-align: center; margin-top: 1rem; font-size: .9rem; color: var(--secondary); }
+        .auth-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .error-msg   { background: #fee2e2; color: #991b1b; padding: .75rem 1rem; border-radius: 8px; font-size: .9rem; margin-bottom: 1rem; display: none; }
+        .success-msg { background: #dcfce7; color: #166534; padding: .75rem 1rem; border-radius: 8px; font-size: .9rem; margin-bottom: 1rem; display: none; }
+        .role-note { font-size: .8rem; color: var(--secondary); margin-top: .4rem; }
+    </style>
 </head>
 <body>
-    <div class="auth-container">
-        <h2 style="text-align: center; margin-bottom: 20px;">Join LuxeDrive</h2>
+    <div class="auth-box">
+        <h2>🚗 Create Account</h2>
+        <div class="error-msg"   id="errorMsg"></div>
+        <div class="success-msg" id="successMsg"></div>
         <form id="registerForm">
             <div class="form-group">
-                <label>Full Name</label>
+                <label for="name">Full Name</label>
                 <input type="text" id="name" required placeholder="John Doe">
             </div>
             <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="email" required placeholder="john@example.com">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required placeholder="you@example.com">
             </div>
             <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" required placeholder="••••••••">
+                <label for="password">Password</label>
+                <input type="password" id="password" required placeholder="Min 6 characters" minlength="6">
             </div>
             <div class="form-group">
-                <label>Register as</label>
+                <label for="role">Account Type</label>
                 <select id="role">
-                    <option value="user">User / Renter</option>
-                    <option value="admin">Administrator</option>
+                    <option value="user">User – Browse &amp; Book Cars</option>
+                    <option value="admin">Admin – Manage Fleet &amp; Bookings</option>
                 </select>
+                <p class="role-note">⚠ Admin accounts have full management access.</p>
             </div>
-            <button type="submit" class="btn btn-primary">Create Account</button>
-            <p style="text-align: center; margin-top: 15px; font-size: 0.9rem;">
-                Already have an account? <a href="login.html">Login here</a>
-            </p>
+            <button type="submit" class="btn btn-primary" id="regBtn">Create Account</button>
         </form>
+        <p class="auth-link">Already have an account? <a href="/login">Sign In</a></p>
+        <p class="auth-link" style="margin-top:.5rem"><a href="/">← Back to Home</a></p>
     </div>
 
-    <script src="js/utils.js"></script>
+    <script src="/js/utils.js"></script>
     <script>
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn      = document.getElementById('regBtn');
+            const errEl    = document.getElementById('errorMsg');
+            const succEl   = document.getElementById('successMsg');
+            btn.disabled   = true;
+            btn.textContent = 'Creating…';
+            errEl.style.display  = 'none';
+            succEl.style.display = 'none';
+
             const data = {
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
+                name:     document.getElementById('name').value.trim(),
+                email:    document.getElementById('email').value.trim(),
                 password: document.getElementById('password').value,
-                role: document.getElementById('role').value
+                role:     document.getElementById('role').value
             };
 
             try {
-                const res = await fetch(`${API_URL}/register`, {
+                const res    = await fetch(`${API_URL}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
+
                 if (res.ok) {
-                    alert('Registration successful! Please login.');
-                    window.location.href = 'login.html';
+                    succEl.textContent   = 'Account created! Redirecting to login…';
+                    succEl.style.display = 'block';
+                    setTimeout(() => window.location.href = '/login', 1500);
                 } else {
-                    alert(result.message || 'Registration failed');
+                    errEl.textContent   = result.message || 'Registration failed';
+                    errEl.style.display = 'block';
                 }
             } catch (err) {
-                alert('Connection error. Please try again.');
+                errEl.textContent   = 'Connection error. Please try again.';
+                errEl.style.display = 'block';
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = 'Create Account';
             }
         });
     </script>

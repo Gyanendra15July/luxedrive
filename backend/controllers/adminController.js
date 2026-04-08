@@ -1,66 +1,71 @@
 const db = require('../config/db');
 
+// GET /api/admin/stats
 exports.getStats = async (req, res) => {
     try {
-        const [[usersRow]] = await db.execute('SELECT COUNT(*) AS total_users FROM users');
-        const [[carsRow]] = await db.execute('SELECT COUNT(*) AS total_cars FROM cars');
-        const [[bookingsRow]] = await db.execute('SELECT COUNT(*) AS total_bookings FROM bookings');
+        const [[usersRow]]    = await db.execute('SELECT COUNT(*) AS total FROM users');
+        const [[carsRow]]     = await db.execute('SELECT COUNT(*) AS total FROM cars');
+        const [[bookingsRow]] = await db.execute('SELECT COUNT(*) AS total FROM bookings');
 
-        const [mostBookedRows] = await db.execute(
-            `SELECT c.id, c.car_name, c.brand, c.type, COUNT(b.id) AS bookings_count
+        const [mostBooked] = await db.execute(
+            `SELECT c.id, c.name, COUNT(b.id) AS bookings_count
              FROM bookings b
              JOIN cars c ON c.id = b.car_id
-             GROUP BY c.id, c.car_name, c.brand, c.type
+             GROUP BY c.id, c.name
              ORDER BY bookings_count DESC
              LIMIT 1`
         );
 
-        const most_booked_car = mostBookedRows.length
-            ? {
-                  id: mostBookedRows[0].id,
-                  car_name: mostBookedRows[0].car_name,
-                  brand: mostBookedRows[0].brand,
-                  type: mostBookedRows[0].type,
-                  bookings_count: mostBookedRows[0].bookings_count
-              }
-            : null;
-
-        return res.json({
-            total_users: usersRow.total_users,
-            total_cars: carsRow.total_cars,
-            total_bookings: bookingsRow.total_bookings,
-            most_booked_car
+        res.json({
+            total_users:    usersRow.total,
+            total_cars:     carsRow.total,
+            total_bookings: bookingsRow.total,
+            most_booked_car: mostBooked[0] || null
         });
     } catch (error) {
-        return res.status(500).json({ message: 'Error fetching admin stats', error: error.message });
+        console.error('[STATS ERROR]', error.message);
+        res.status(500).json({ message: error.message });
     }
 };
 
-exports.getCarBookingCounts = async (req, res) => {
-    try {
-        const [rows] = await db.execute(
-            `SELECT c.id AS car_id, c.car_name, c.brand, c.type, c.availability_status,
-                    COUNT(b.id) AS bookings_count,
-                    COUNT(DISTINCT b.user_id) AS unique_users_count
-             FROM cars c
-             LEFT JOIN bookings b ON b.car_id = c.id
-             GROUP BY c.id, c.car_name, c.brand, c.type, c.availability_status
-             ORDER BY bookings_count DESC, c.id DESC`
-        );
-        return res.json(rows);
-    } catch (error) {
-        return res
-            .status(500)
-            .json({ message: 'Error fetching car booking counts', error: error.message });
-    }
-};
-
+// GET /api/admin/cars
 exports.listCars = async (req, res) => {
     try {
         const [rows] = await db.execute('SELECT * FROM cars ORDER BY id DESC');
-        return res.json(rows);
+        res.json(rows);
     } catch (error) {
-        return res.status(500).json({ message: 'Error fetching cars', error: error.message });
+        console.error('[ADMIN LIST CARS ERROR]', error.message);
+        res.status(500).json({ message: error.message });
     }
 };
 
+// GET /api/admin/bookings
+exports.listAllBookings = async (req, res) => {
+    try {
+        const [rows] = await db.execute(
+            `SELECT b.*, u.name AS user_name, u.email AS user_email,
+                    c.name AS car_name, c.price_per_day
+             FROM bookings b
+             JOIN users u ON b.user_id = u.id
+             JOIN cars  c ON b.car_id  = c.id
+             ORDER BY b.created_at DESC`
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('[ADMIN BOOKINGS ERROR]', error.message);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// GET /api/admin/users
+exports.listUsers = async (req, res) => {
+    try {
+        const [rows] = await db.execute(
+            'SELECT id, name, email, role, created_at FROM users ORDER BY id DESC'
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('[ADMIN USERS ERROR]', error.message);
+        res.status(500).json({ message: error.message });
+    }
+};

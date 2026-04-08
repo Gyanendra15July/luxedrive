@@ -3,63 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookings - LuxeDrive</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>My Bookings – LuxeDrive</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { background: #f1f5f9; }
+        .top-bar { background: var(--dark); color: #fff; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .top-bar .logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(to right, #60a5fa, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .top-bar nav a { color: #cbd5e1; text-decoration: none; margin-left: 1.5rem; font-weight: 500; transition: color .3s; }
+        .top-bar nav a:hover { color: #fff; }
+        .top-bar nav a.active { color: #60a5fa; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1.5rem 3rem; }
+        .page-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--dark); }
+        .table-wrap { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.07); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 1rem 1.25rem; background: #f8fafc; color: #475569; font-weight: 700; font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; font-size: .95rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8fafc; }
+        .car-cell { display: flex; align-items: center; gap: .75rem; }
+        .car-cell img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
+        .badge { display: inline-block; padding: .25rem .75rem; border-radius: 20px; font-size: .78rem; font-weight: 700; }
+        .badge-pending  { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #dcfce7; color: #166534; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-cancelled{ background: #f1f5f9; color: #475569; }
+        .empty-state { text-align: center; padding: 4rem 1rem; color: #94a3b8; }
+        .empty-state h3 { font-size: 1.4rem; margin-bottom: .5rem; }
+        .empty-state a  { color: var(--primary); text-decoration: none; font-weight: 700; }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="container nav">
-            <div class="logo">LuxeDrive</div>
-            <ul>
-                <li><a href="dashboard.html">Browse Cars</a></li>
-                <li><a href="bookings.html" class="active">My Bookings</a></li>
-                <li><a href="#" onclick="auth.logout()">Logout</a></li>
-            </ul>
-        </div>
-    </header>
+    <div class="top-bar">
+        <div class="logo">LUXEDRIVE</div>
+        <nav>
+            <a href="/dashboard">Browse Cars</a>
+            <a href="/bookings" class="active">My Bookings</a>
+            <a href="/profile">Profile</a>
+            <a href="#" onclick="auth.logout()">Logout</a>
+        </nav>
+    </div>
 
     <div class="container">
-        <h1 style="margin-top: 40px;">My Booking History</h1>
-        <div class="table-container" style="margin-top:20px;">
+        <h1 class="page-title">📋 My Booking History</h1>
+        <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
                         <th>Car</th>
                         <th>Start Date</th>
                         <th>End Date</th>
+                        <th>Price/Day</th>
                         <th>Status</th>
                     </tr>
                 </thead>
-                <tbody id="myBookingsBody">
-                    <!-- Bookings loaded via JS -->
+                <tbody id="bookingBody">
+                    <tr><td colspan="5" style="text-align:center;padding:2rem;color:#94a3b8">Loading…</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <script src="js/utils.js"></script>
+    <script src="/js/utils.js"></script>
     <script>
-        protectRoute();
+        if (!auth.requireLogin()) { /* redirected */ }
 
         async function loadMyBookings() {
-            const res = await fetch(`${API_URL}/my-bookings`, {
-                headers: { 'Authorization': `Bearer ${auth.getToken()}` }
-            });
-            const bookings = await res.json();
-            const body = document.getElementById('myBookingsBody');
-            body.innerHTML = bookings.map(b => `
-                <tr>
-                    <td>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <img src="${b.car_image ? 'uploads/' + b.car_image : 'https://via.placeholder.com/50'}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
-                            <span>${b.car_name}</span>
-                        </div>
-                    </td>
-                    <td>${new Date(b.start_date).toLocaleDateString()}</td>
-                    <td>${new Date(b.end_date).toLocaleDateString()}</td>
-                    <td><span class="status-badge status-${b.status}">${b.status.toUpperCase()}</span></td>
-                </tr>
-            `).join('');
+            const tbody = document.getElementById('bookingBody');
+            try {
+                const res  = await fetch(`${API_URL}/my-bookings`, {
+                    headers: { 'Authorization': `Bearer ${auth.getToken()}` }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const bookings = await res.json();
+
+                if (!Array.isArray(bookings) || !bookings.length) {
+                    tbody.innerHTML = `
+                        <tr><td colspan="5">
+                            <div class="empty-state">
+                                <h3>No Bookings Yet</h3>
+                                <p><a href="/dashboard">Browse our fleet</a> and make your first booking!</p>
+                            </div>
+                        </td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = bookings.map(b => `
+                    <tr>
+                        <td>
+                            <div class="car-cell">
+                                <img src="${b.car_image ? '/uploads/' + b.car_image : 'https://placehold.co/48x48/1e293b/white?text=Car'}"
+                                     alt="${b.car_name}"
+                                     onerror="this.src='https://placehold.co/48x48/1e293b/white?text=Car'">
+                                <span><strong>${b.car_name}</strong></span>
+                            </div>
+                        </td>
+                        <td>${new Date(b.start_date).toLocaleDateString()}</td>
+                        <td>${new Date(b.end_date).toLocaleDateString()}</td>
+                        <td>$${b.price_per_day}</td>
+                        <td><span class="badge badge-${b.status}">${b.status.toUpperCase()}</span></td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('[My Bookings Error]', err);
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#ef4444;padding:2rem">Error: ${err.message}</td></tr>`;
+            }
         }
 
         loadMyBookings();
