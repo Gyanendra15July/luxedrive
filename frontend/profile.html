@@ -5,379 +5,185 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile | LUXEDRIVE</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .profile-container {
+        .profile-wrap {
+            max-width: 1000px;
+            margin: 2rem auto;
             display: grid;
-            grid-template-columns: 350px 1fr;
+            grid-template-columns: 1fr 2fr;
             gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 0 1.5rem;
         }
 
-        .profile-sidebar {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
+        .profile-side {
+            background: var(--white);
+            border-radius: var(--radius);
             padding: 2rem;
             text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
             height: fit-content;
         }
 
-        .profile-photo {
-            width: 150px;
-            height: 150px;
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            border: 4px solid var(--primary);
-            margin: 0 auto 1rem;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+            margin: 0 auto 1.25rem;
+            border: 3px solid var(--primary-light);
+            background: var(--surface);
         }
 
-        .upload-btn-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            margin-bottom: 2rem;
+        .profile-info h3 { font-size: 1.4rem; font-weight: 800; color: var(--dark); margin-bottom: .25rem; }
+        .profile-info p { color: var(--text-muted); font-size: .9rem; margin-bottom: 2rem; }
+
+        .profile-main-area {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
         }
 
-        .upload-btn-wrapper input[type=file] {
-            font-size: 100px;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .profile-main {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 3rem;
-        }
-
-        .sec-title {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-            color: var(--light);
+        .section-h {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            padding-bottom: .75rem;
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .otp-group {
-            display: none;
-            background: rgba(59, 130, 246, 0.1);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--primary);
-            margin-top: 1rem;
+            gap: .5rem;
         }
 
-        .booking-history {
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--glass-border);
-        }
-
-        .history-card {
-            background: var(--dark-accent);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+        .booking-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: var(--transition);
-        }
-        .history-card:hover { border-color: var(--primary); }
-
-        .status-badge {
-            padding: 0.4rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-        .status-confirmed { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .status-cancelled { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.5);
-            color: #f87171;
-            margin-top: 2rem;
-        }
-        .btn-danger:hover {
-            background: #ef4444;
-            color: white;
+            padding: 1rem;
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+            margin-bottom: .75rem;
+            border: 1px solid var(--border);
         }
 
-        @media(max-width: 900px) {
-            .profile-container { grid-template-columns: 1fr; }
+        .booking-details h4 { font-size: 1rem; margin-bottom: .25rem; }
+        .booking-details p { font-size: .85rem; color: var(--text-muted); }
+
+        .booking-status { text-align: right; }
+        .booking-status .price { font-weight: 800; color: var(--primary); font-size: 1.1rem; margin-bottom: .35rem; }
+
+        @media (max-width: 768px) {
+            .profile-wrap { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body class="auth-page" style="justify-content: flex-start; padding-top: 100px;">
-    <nav>
-        <div class="logo"><a href="/">LUXEDRIVE</a></div>
-        <ul class="nav-links">
-            <li><a href="/">Home</a></li>
-            <li><a href="/cars">Cars</a></li>
-            <li><a href="/dashboard">Dashboard</a></li>
-        </ul>
-        <div class="nav-btns" id="nav-auth-btns"></div>
-    </nav>
+<body>
 
-    <div class="section-padding" style="padding-top: 40px;">
-        <div class="profile-container fade-in">
-            
-            <!-- Left Sidebar -->
-            <div class="profile-sidebar">
-                <img src="https://via.placeholder.com/150" alt="Profile" id="displayProfileImg" class="profile-photo">
-                <div class="upload-btn-wrapper">
-                    <button class="btn btn-outline btn-sm"><i class="fas fa-camera"></i> Change Photo</button>
-                    <input type="file" id="photoUpload" accept="image/*" onchange="handlePhotoUpload(event)" />
-                </div>
-                <h3 id="displayName" style="margin-bottom: 0.5rem; font-size: 1.8rem;">---</h3>
-                <p id="displayEmail" style="color: var(--gray); margin-bottom: 2rem;">---</p>
-                <button class="btn btn-danger full-width" onclick="handleDeleteAccount()">
-                    <i class="fas fa-trash-alt"></i> Delete Account
-                </button>
+<nav>
+    <div class="logo"><a href="/">LUXEDRIVE</a></div>
+    <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/cars">Fleet</a></li>
+        <li><a href="/contact">Contact</a></li>
+    </ul>
+    <div class="nav-btns" id="nav-auth-btns">
+        <!-- JS Managed -->
+    </div>
+</nav>
+
+<div class="page-header">
+    <h1>👤 My Profile</h1>
+    <p>Manage your account settings and view booking history.</p>
+</div>
+
+<div class="profile-wrap reveal">
+    <!-- Sidebar -->
+    <aside class="profile-side">
+        <img src="https://placehold.co/120x120/1e293b/white?text=User" id="profImg" class="profile-avatar">
+        <div class="profile-info">
+            <h3 id="sideName">---</h3>
+            <p id="sideEmail">---</p>
+        </div>
+        <button class="btn btn-outline btn-full btn-sm" onclick="auth.logout()">Logout</button>
+    </aside>
+
+    <!-- Main -->
+    <div class="profile-main-area">
+        <div class="section-h">📝 Personal Information</div>
+        <form id="profForm">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="profName" required>
             </div>
-
-            <!-- Right Main Area -->
-            <div class="profile-main">
-                <h2 class="sec-title"><i class="fas fa-user-edit"></i> Account Details</h2>
-                
-                <form id="profileForm" onsubmit="handleProfileUpdate(event)">
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" id="profileName" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Mobile Number (Changing requires OTP)</label>
-                        <div style="display: flex; gap: 1rem;">
-                            <input type="tel" id="profileMobile" required>
-                            <button type="button" id="sendOtpBtn" class="btn btn-outline" style="white-space: nowrap;" onclick="initiateMobileChange()">Change Mobile</button>
-                        </div>
-                    </div>
-
-                    <div class="otp-group" id="otpGroup">
-                        <label style="color: var(--primary-light);">Enter 6-Digit OTP sent to your new number</label>
-                        <div style="display: flex; gap: 1rem;">
-                            <input type="text" id="otpInput" placeholder="••••••" maxlength="6">
-                            <button type="button" class="btn btn-primary" onclick="verifyMobileOtp()">Verify & Save</button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save Changes</button>
-                </form>
-
-                <!-- Booking History Sub-section -->
-                <div class="booking-history">
-                    <h2 class="sec-title"><i class="fas fa-history"></i> Booking History</h2>
-                    <div id="historyList">
-                        <p style="color: var(--gray);">Loading history...</p>
-                    </div>
-                </div>
-
+            <div class="form-group">
+                <label>Email (Read Only)</label>
+                <input type="email" id="profEmail" readonly style="background:#f8fafc; cursor:not-allowed">
             </div>
+            <button type="submit" class="btn btn-primary" id="saveBtn">Save Profile</button>
+        </form>
+
+        <div class="section-h" style="margin-top:2.5rem">📅 Recent Bookings</div>
+        <div id="bookingList">
+            <p class="empty-state" style="padding:2rem 0">Loading your history...</p>
         </div>
     </div>
+</div>
 
-    <script src="/js/script.js"></script>
-    <script>
-        let currentMobile = '';
+<footer>
+    <div class="footer-bottom"><p>© 2026 LUXEDRIVE. All rights reserved.</p></div>
+</footer>
 
-        async function loadProfileData() {
-            const token = localStorage.getItem('token');
-            if(!token) return window.location.href = '/login';
+<script src="/js/utils.js"></script>
+<script src="/js/script.js"></script>
+<script>
+    if (!auth.requireLogin()) {}
 
-            try {
-                // Load User Data
-                const res = await fetch('/api/user/profile', { headers: { 'Authorization': `Bearer ${token}` }});
-                if(!res.ok) throw new Error('Session Expired');
+    async function loadData() {
+        try {
+            // Get user info
+            const res = await fetch(`${API_URL}/me`, {
+                headers: { 'Authorization': `Bearer ${auth.getToken()}` }
+            });
+            if (res.ok) {
                 const user = await res.json();
-                
-                document.getElementById('profileName').value = user.name;
-                document.getElementById('profileMobile').value = user.mobile;
-                document.getElementById('displayName').innerText = user.name;
-                document.getElementById('displayEmail').innerText = user.email;
-                if(user.profile_image) document.getElementById('displayProfileImg').src = user.profile_image;
-                currentMobile = user.mobile;
-                
-                // Load History
-                loadHistory(token);
-            } catch (err) {
-                console.error(err);
-                logout();
+                document.getElementById('profName').value = user.name;
+                document.getElementById('profEmail').value = user.email;
+                document.getElementById('sideName').textContent = user.name;
+                document.getElementById('sideEmail').textContent = user.email;
             }
-        }
 
-        async function loadHistory(token) {
-            const list = document.getElementById('historyList');
-            try {
-                const res = await fetch('/api/bookings', { headers: { 'Authorization': `Bearer ${token}` }});
-                const bookings = await res.json();
+            // Get bookings
+            const bRes = await fetch(`${API_URL}/my-bookings`, {
+                headers: { 'Authorization': `Bearer ${auth.getToken()}` }
+            });
+            const bookings = await bRes.json();
+            const list = document.getElementById('bookingList');
 
-                if(!bookings.length) {
-                    list.innerHTML = '<p style="color: var(--gray);">You have no past bookings.</p>';
-                    return;
-                }
-
-                list.innerHTML = bookings.map(b => {
-                    const statusClass = b.status === 'Cancelled' ? 'status-cancelled' : 'status-confirmed';
-                    const canCancel = b.status !== 'Cancelled' && new Date(b.pickup_date) > new Date();
-                    
-                    return `
-                    <div class="history-card">
-                        <div>
-                            <h3 style="margin-bottom: 0.5rem;">${b.car_name}</h3>
-                            <p style="color: var(--gray); font-size: 0.9rem; margin-bottom: 0.5rem;">
-                                <i class="fas fa-calendar-alt"></i> ${new Date(b.pickup_date).toLocaleDateString()} - ${new Date(b.return_date).toLocaleDateString()}
-                            </p>
-                            <p style="color: var(--gray); font-size: 0.9rem;">
-                                <i class="fas fa-map-marker-alt" style="color: var(--primary);"></i> ${b.pickup_location}
-                            </p>
+            if (!bookings.length) {
+                list.innerHTML = '<p class="empty-state">No bookings found yet.</p>';
+            } else {
+                list.innerHTML = bookings.map(b => `
+                    <div class="booking-item">
+                        <div class="booking-details">
+                            <h4>${b.car_name}</h4>
+                            <p>${new Date(b.start_date).toLocaleDateString()} - ${new Date(b.end_date).toLocaleDateString()}</p>
                         </div>
-                        <div style="text-align: right;">
-                            <div class="status-badge ${statusClass}" style="margin-bottom: 1rem; display: inline-block;">${b.status}</div>
-                            <h3 style="color: var(--primary);">$${b.total_price}</h3>
-                            ${canCancel ? `<button class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin-top: 0.5rem;" onclick="cancelBooking(${b.id})">Cancel</button>` : ''}
+                        <div class="booking-status">
+                            <div class="price">$${b.price_per_day}</div>
+                            <span class="badge badge-${b.status}">${b.status.toUpperCase()}</span>
                         </div>
                     </div>
-                `}).join('');
-            } catch (err) {
-                list.innerHTML = '<p style="color: #f87171;">Failed to load booking history.</p>';
+                `).join('');
             }
+        } catch (err) {
+            console.error(err);
         }
+    }
 
-        async function handleProfileUpdate(e) {
-            e.preventDefault();
-            const token = localStorage.getItem('token');
-            const name = document.getElementById('profileName').value;
-            
-            try {
-                const res = await fetch('/api/user/update', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ name })
-                });
-                
-                if(res.ok) {
-                    alert('Profile updated successfully!');
-                    localStorage.setItem('name', name);
-                    checkAuth();
-                    loadProfileData();
-                }
-            } catch(err) { alert('Update failed'); }
-        }
-
-        async function initiateMobileChange() {
-            const newMobile = document.getElementById('profileMobile').value;
-            if (newMobile === currentMobile) return alert('This is already your current number.');
-            
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch('/api/user/send-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ mobile: newMobile })
-                });
-                const data = await res.json();
-                if(res.ok) {
-                    alert(data.message);
-                    document.getElementById('otpGroup').style.display = 'block';
-                    document.getElementById('sendOtpBtn').innerText = 'Resend OTP';
-                } else alert(data.message);
-            } catch (err) { alert('Error sending OTP'); }
-        }
-
-        async function verifyMobileOtp() {
-            const newMobile = document.getElementById('profileMobile').value;
-            const otp = document.getElementById('otpInput').value;
-            const token = localStorage.getItem('token');
-
-            if(otp.length !== 6) return alert('Enter valid 6-digit OTP');
-
-            try {
-                const res = await fetch('/api/user/verify-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ mobile: newMobile, otp })
-                });
-                const data = await res.json();
-                if(res.ok) {
-                    alert('Mobile verified successfully!');
-                    document.getElementById('otpGroup').style.display = 'none';
-                    currentMobile = newMobile;
-                } else alert(data.message);
-            } catch (err) { alert('OTP verification failed'); }
-        }
-
-        async function handlePhotoUpload(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-
-            const formData = new FormData();
-            formData.append('profile_image', file);
-            
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch('/api/user/upload-photo', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-                const data = await res.json();
-                if(res.ok) {
-                    document.getElementById('displayProfileImg').src = data.profile_image;
-                    alert('Photo updated successfully');
-                } else alert(data.message);
-            } catch (err) { alert('Upload failed'); }
-        }
-
-        async function cancelBooking(id) {
-            if(!confirm('Are you sure you want to cancel this booking? This action cannot be reversed.')) return;
-            
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch(`/api/bookings/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if(res.ok) {
-                    alert('Booking cancelled.');
-                    loadHistory(token);
-                } else alert(data.message);
-            } catch (err) { alert('Failed to cancel the booking'); }
-        }
-
-        async function handleDeleteAccount() {
-            if(!confirm('DANGER: Are you absolutely sure you want to delete your account? All history will be lost!')) return;
-
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch('/api/user/delete', {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if(res.ok) {
-                    alert('Account deleted successfully.');
-                    logout();
-                }
-            } catch (err) { alert('Failed to delete account'); }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-            loadProfileData();
-        });
-    </script>
+    loadData();
+</script>
 </body>
 </html>
