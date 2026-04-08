@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Bookings - LuxeDrive</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <h2 class="logo">LuxeDrive Admin</h2>
+            <ul class="sidebar-menu">
+                <li><a href="admin.html">Manage Cars</a></li>
+                <li><a href="manage-bookings.html" class="active">Manage Bookings</a></li>
+                <li><a href="#" onclick="auth.logout()">Logout</a></li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <header style="background:transparent; padding:0; box-shadow:none; margin-bottom:30px;">
+                <h1>Manage Bookings</h1>
+            </header>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Car</th>
+                            <th>Dates</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingTableBody">
+                        <!-- Bookings loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script>
+        protectRoute(true);
+
+        async function loadBookings() {
+            const res = await fetch(`${API_URL}/all-bookings`, {
+                headers: { 'Authorization': `Bearer ${auth.getToken()}` }
+            });
+            const bookings = await res.json();
+            const body = document.getElementById('bookingTableBody');
+            body.innerHTML = bookings.map(b => `
+                <tr>
+                    <td>${b.user_name}</td>
+                    <td>${b.car_name}</td>
+                    <td>${new Date(b.start_date).toLocaleDateString()} to ${new Date(b.end_date).toLocaleDateString()}</td>
+                    <td><span class="status-badge status-${b.status}">${b.status.toUpperCase()}</span></td>
+                    <td>
+                        ${b.status === 'pending' ? `
+                            <button class="btn btn-primary" style="width:auto; padding:5px 10px; margin-right:5px; background:var(--success);" onclick="updateStatus(${b.id}, 'approved')">Approve</button>
+                            <button class="btn btn-danger" style="width:auto; padding:5px 10px;" onclick="updateStatus(${b.id}, 'rejected')">Reject</button>
+                        ` : '--'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateStatus(id, status) {
+            const res = await fetch(`${API_URL}/booking/${id}/status`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${auth.getToken()}` 
+                },
+                body: JSON.stringify({ status })
+            });
+            if (res.ok) loadBookings();
+        }
+
+        loadBookings();
+    </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - LuxeDrive</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container nav">
+            <div class="logo">LuxeDrive</div>
+            <ul>
+                <li><a href="dashboard.html">Browse Cars</a></li>
+                <li><a href="bookings.html" class="active">My Bookings</a></li>
+                <li><a href="#" onclick="auth.logout()">Logout</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 style="margin-top: 40px;">My Booking History</h1>
+        <div class="table-container" style="margin-top:20px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Car</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="myBookingsBody">
+                    <!-- Bookings loaded via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script>
+        protectRoute();
+
+        async function loadMyBookings() {
+            const res = await fetch(`${API_URL}/my-bookings`, {
+                headers: { 'Authorization': `Bearer ${auth.getToken()}` }
+            });
+            const bookings = await res.json();
+            const body = document.getElementById('myBookingsBody');
+            body.innerHTML = bookings.map(b => `
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${b.car_image ? 'uploads/' + b.car_image : 'https://via.placeholder.com/50'}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+                            <span>${b.car_name}</span>
+                        </div>
+                    </td>
+                    <td>${new Date(b.start_date).toLocaleDateString()}</td>
+                    <td>${new Date(b.end_date).toLocaleDateString()}</td>
+                    <td><span class="status-badge status-${b.status}">${b.status.toUpperCase()}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        loadMyBookings();
+    </script>
+</body>
+</html>

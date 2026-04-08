@@ -1,24 +1,27 @@
-const { verifyToken } = require('../utils/token');
+const jwt = require('jsonwebtoken');
 
-function authRequired(req, res, next) {
-    try {
-        const header = req.headers.authorization || '';
-        const [scheme, token] = header.split(' ');
-        if (scheme !== 'Bearer' || !token) {
-            return res.status(401).json({ message: 'Missing Authorization: Bearer <token>' });
+const verifyToken = (req, res, next) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    
+    if (!token) {
+        return res.status(403).json({ message: "No token provided" });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: "Unauthorized!" });
         }
-        req.user = verifyToken(token);
-        return next();
-    } catch (err) {
-        return res.status(401).json({ message: 'Invalid token', error: err.message });
-    }
-}
+        req.userId = decoded.id;
+        req.userRole = decoded.role;
+        next();
+    });
+};
 
-function adminOnly(req, res, next) {
-    if (!req.user || req.user.role !== 'admin') {
-        return res.status(403).json({ message: 'Admin access required' });
+const isAdmin = (req, res, next) => {
+    if (req.userRole !== 'admin') {
+        return res.status(403).json({ message: "Require Admin Role!" });
     }
-    return next();
-}
+    next();
+};
 
-module.exports = { authRequired, adminOnly };
+module.exports = { verifyToken, isAdmin };

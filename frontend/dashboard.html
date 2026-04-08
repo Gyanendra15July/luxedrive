@@ -3,133 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | LUXEDRIVE</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .status-badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .status-confirmed { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .status-cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .status-completed { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
-    </style>
+    <title>Dashboard - LuxeDrive</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav>
-        <div class="logo">LUXEDRIVE</div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/cars">Fleet</a>
-            <a href="/dashboard" class="active">My Bookings</a>
-            <a href="/login" id="loginBtn">Sign In</a>
-            <a href="#" id="logoutBtn" style="display: none;" onclick="logout()">Logout</a>
+    <header>
+        <div class="container nav">
+            <div class="logo">LuxeDrive</div>
+            <ul>
+                <li><a href="dashboard.html" class="active">Browse Cars</a></li>
+                <li><a href="bookings.html">My Bookings</a></li>
+                <li><a href="#" onclick="auth.logout()">Logout</a></li>
+            </ul>
         </div>
-    </nav>
-
-    <header class="page-header">
-        <h1 class="reveal">My Bookings</h1>
-        <p class="reveal">Your confirmed reservations</p>
     </header>
 
     <div class="container">
-        <div id="bookings" class="car-grid"></div>
+        <h1 style="margin-top: 40px;">Available Cars</h1>
+        <div class="car-grid" id="carGrid">
+            <!-- Cars will be loaded here -->
+        </div>
     </div>
 
-    <script src="/js/script.js"></script>
+    <!-- Booking Modal -->
+    <div id="bookingModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:white; padding:40px; border-radius:12px; width:400px;">
+            <h3>Book <span id="modalCarName"></span></h3>
+            <form id="bookingForm" style="margin-top:20px;">
+                <input type="hidden" id="modalCarId">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" id="endDate" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Confirm Booking</button>
+                <button type="button" class="btn" onclick="closeModal()" style="margin-top:10px;">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
     <script>
-        async function loadBookings() {
-            const token = localStorage.getItem('token');
-            if (!token) return window.location.href = '/login';
+        protectRoute();
 
-            const el = document.getElementById('bookings');
-            el.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--gray);">Loading...</div>';
-
-            try {
-                const res = await fetch('/api/bookings', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                    el.innerHTML = `<div style="grid-column: 1/-1; text-align: center;"><p>${data.message || 'Failed to load bookings'}</p></div>`;
-                    return;
-                }
-
-                if (!data.length) {
-                    el.innerHTML = '<div style="grid-column: 1/-1; text-align: center;"><p>No bookings yet. Browse the fleet to reserve your first ride.</p></div>';
-                    return;
-                }
-
-                el.innerHTML = data.map(b => {
-                    const statusClass = b.status === 'Cancelled' ? 'status-cancelled' : 'status-confirmed';
-                    // We only allow cancelling if it's currently confirmed and in the future
-                    const canCancel = b.status !== 'Cancelled' && new Date(b.pickup_date) > new Date();
-                    
-                    return `
-                    <div class="car-card">
-                        <img src="${b.image}" alt="${b.car_name}" class="car-img" onerror="this.src='https://via.placeholder.com/300x200?text=LUXEDRIVE'">
-                        <div class="car-info">
-                            <div style="display: flex; justify-content: space-between; align-items: start;">
-                                <h3>${b.car_name}</h3>
-                                <div class="status-badge ${statusClass}">${b.status || 'Confirmed'}</div>
-                            </div>
-                            <div class="car-meta">
-                                <span>${b.brand}</span>
-                                <span>${b.type || 'Premium'}</span>
-                            </div>
-                             <p style="color: var(--gray); font-size: 0.9rem; margin-top: 0.75rem;">
-                                <i class="fas fa-calendar"></i> ${new Date(b.pickup_date).toLocaleDateString()} to ${new Date(b.return_date).toLocaleDateString()}
-                            </p>
-                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
-                                <p style="font-size: 0.85rem; color: var(--gray); margin-bottom: 0.5rem;">
-                                    <i class="fas fa-map-marker-alt" style="color: var(--primary);"></i> From: <strong>${b.pickup_location}</strong>
-                                </p>
-                                ${b.destination ? `
-                                <p style="font-size: 0.85rem; color: var(--gray);">
-                                    <i class="fas fa-flag-checkered" style="color: var(--primary);"></i> To: <strong>${b.destination}</strong>
-                                </p>` : ''}
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
-                                <div class="car-price">$${b.total_price} total</div>
-                                ${canCancel ? `<button class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.85rem; margin-top: 0; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.5); color: #f87171;" onclick="cancelBooking(${b.id})">Cancel</button>` : ''}
-                            </div>
-                        </div>
+        async function loadCars() {
+            const res = await fetch(`${API_URL}/cars`);
+            const cars = await res.json();
+            const grid = document.getElementById('carGrid');
+            grid.innerHTML = cars.map(car => `
+                <div class="car-card">
+                    <img src="${car.image ? 'uploads/' + car.image : 'https://via.placeholder.com/300x200?text=No+Image'}" class="car-image" alt="${car.name}">
+                    <div class="car-info">
+                        <div class="car-name">${car.name}</div>
+                        <div class="car-price">$${car.price_per_day} / day</div>
+                        <div class="car-desc">${car.description || 'No description available.'}</div>
+                        <button class="btn btn-primary" onclick="openBooking(${car.id}, '${car.name}')" ${!car.available ? 'disabled' : ''}>
+                            ${car.available ? 'Book Now' : 'Currently Unavailable'}
+                        </button>
                     </div>
-                `}).join('');
-            } catch (err) {
-                el.innerHTML = '<div style="grid-column: 1/-1; text-align: center;"><p>Failed to connect to the booking service.</p></div>';
-            }
+                </div>
+            `).join('');
         }
 
-        async function cancelBooking(id) {
-            if(!confirm('Are you absolutely sure you want to cancel this reservation?')) return;
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch(`/api/bookings/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    alert('Booking cancelled successfully.');
-                    loadBookings(); // Immediately refresh the UI automatically
-                } else {
-                    alert(data.message);
-                }
-            } catch (err) { 
-                alert('An error occurred whilst attempting to cancel the booking.'); 
-            }
+        function openBooking(id, name) {
+            document.getElementById('modalCarId').value = id;
+            document.getElementById('modalCarName').innerText = name;
+            document.getElementById('bookingModal').style.display = 'flex';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-            loadBookings();
+        function closeModal() {
+            document.getElementById('bookingModal').style.display = 'none';
+        }
+
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                car_id: document.getElementById('modalCarId').value,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value
+            };
+
+            const res = await fetch(`${API_URL}/book`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${auth.getToken()}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                alert('Booking request sent successfully!');
+                closeModal();
+            } else {
+                alert('Failed to book. Please try again.');
+            }
         });
+
+        loadCars();
     </script>
 </body>
 </html>

@@ -1,151 +1,58 @@
 const db = require('../config/db');
 
-/**
- * Handle new luxury car booking requests.
- */
-exports.createBooking = async (req, res, next) => {
+exports.bookCar = async (req, res) => {
     try {
-        const userId = req.user && req.user.userId;
-        const { car_id, pickup_date, return_date, total_price, pickup_location, destination } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({ message: 'Authentication required' });
-        }
-        if (!car_id || !pickup_date || !return_date || !total_price || !pickup_location) {
-            return res.status(400).json({ message: 'Missing required fields: car_id, dates, price, or pickup location.' });
-        }
-
-        // 1. Validate dates logic
-        const start = new Date(pickup_date);
-        const end = new Date(return_date);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-
-        if (start < now) {
-            return res.status(400).json({ message: 'Pickup date cannot be in the past' });
-        }
-        if (start >= end) {
-            return res.status(400).json({ message: 'Return date must be after pickup date' });
-        }
-
-        // 2. Locate Car and Check for Overlapping Bookings
-        // Logic: Overlap exists if (existing.pickup_date <= new_return_date) AND (existing.return_date >= new_pickup_date)
-        const [conflicts] = await db.execute(
-            `SELECT id FROM bookings 
-             WHERE car_id = ? 
-             AND (pickup_date <= ? AND return_date >= ?) 
-             LIMIT 1`,
-            [car_id, return_date, pickup_date]
+        const { car_id, start_date, end_date } = req.body;
+        const user_id = req.userId;
+        
+        const [result] = await db.execute(
+            'INSERT INTO bookings (user_id, car_id, start_date, end_date) VALUES (?, ?, ?, ?)',
+            [user_id, car_id, start_date, end_date]
         );
-
-        if (conflicts.length > 0) {
-            return res.status(400).json({ 
-                message: 'Car already booked for selected dates' 
-            });
-        }
-
-        // 3. Confirm Car Availability
-        const [cars] = await db.execute(
-            'SELECT id, availability_status FROM cars WHERE id = ? LIMIT 1',
-            [car_id]
-        );
-        if (!cars.length) return res.status(404).json({ message: 'Car not found' });
-        if (cars[0].availability_status !== 'available') {
-            return res.status(409).json({ message: 'This vehicle is currently unavailable' });
-        }
-
-        // 4. Record Booking with Location Details
-        await db.execute(
-            'INSERT INTO bookings (user_id, car_id, pickup_date, return_date, total_price, pickup_location, destination) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [userId, car_id, pickup_date, return_date, total_price, pickup_location, destination || null]
-        );
-
-        return res.status(201).json({ message: 'Reservation confirmed! Your luxury experience starts soon.' });
+        
+        res.status(201).json({ message: "Booking request submitted", bookingId: result.insertId });
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: error.message });
     }
 };
 
-/**
- * Get reservations for the currently authenticated client.
- */
-exports.getMyBookings = async (req, res, next) => {
+exports.getMyBookings = async (req, res) => {
     try {
-        const userId = req.user && req.user.userId;
-        if (!userId) return res.status(401).json({ message: 'Authentication required' });
-
-        const [rows] = await db.execute(
-            `SELECT b.id, b.pickup_date, b.return_date, b.total_price, b.pickup_location, b.destination, b.status, b.created_at,
-                    c.car_name, c.brand, c.image, c.type
-             FROM bookings b
-             JOIN cars c ON c.id = b.car_id
-             WHERE b.user_id = ?
-             ORDER BY b.pickup_date DESC`,
-            [userId]
+        const [bookings] = await db.execute(
+            `SELECT b.*, c.name as car_name, c.image as car_image 
+             FROM bookings b 
+             JOIN cars c ON b.car_id = c.id 
+             WHERE b.user_id = ?`,
+            [req.userId]
         );
-
-        return res.json(rows);
+        res.json(bookings);
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: error.message });
     }
 };
 
-/**
- * Admin view for monitoring all reservations inclusive of location data.
- */
-exports.getAllBookings = async (req, res, next) => {
+exports.getAllBookings = async (req, res) => {
     try {
-        const [rows] = await db.execute(
-            `SELECT b.id, b.pickup_date, b.return_date, b.total_price, b.pickup_location, b.destination, b.status, b.created_at,
-                    u.name AS user_name, u.email AS user_email, u.mobile AS user_mobile,
-                    c.car_name, c.brand, c.image, c.type
-             FROM bookings b
-             JOIN users u ON u.id = b.user_id
-             JOIN cars c ON c.id = b.car_id
-             ORDER BY b.created_at DESC`
+        const [bookings] = await db.execute(
+            `SELECT b.*, u.name as user_name, c.name as car_name 
+             FROM bookings b 
+             JOIN users u ON b.user_id = u.id 
+             JOIN cars c ON b.car_id = c.id`
         );
-        return res.json(rows);
+        res.json(bookings);
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: error.message });
     }
 };
 
-/**
- * Handle booking cancellation.
- */
-exports.cancelBooking = async (req, res, next) => {
+exports.updateBookingStatus = async (req, res) => {
     try {
-        const userId = req.user && req.user.userId;
+        const { status } = req.body;
         const bookingId = req.params.id;
-
-        if (!userId) return res.status(401).json({ message: 'Authentication required' });
-
-        // Verify booking belongs to user
-        const [bookings] = await db.execute('SELECT id, status, pickup_date FROM bookings WHERE id = ? AND user_id = ? LIMIT 1', [bookingId, userId]);
         
-        if (!bookings.length) {
-            return res.status(404).json({ message: 'Booking not found' });
-        }
-        
-        const booking = bookings[0];
-        
-        if (booking.status === 'Cancelled') {
-            return res.status(400).json({ message: 'Booking is already cancelled' });
-        }
-
-        const pickupDate = new Date(booking.pickup_date);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-
-        if (pickupDate <= now) {
-            return res.status(400).json({ message: 'You cannot cancel a booking on or after the pickup date' });
-        }
-
-        // We use soft-delete by changing status to keep a history log
-        await db.execute('UPDATE bookings SET status = ? WHERE id = ?', ['Cancelled', bookingId]);
-        
-        return res.json({ message: 'Booking cancelled successfully' });
+        await db.execute('UPDATE bookings SET status = ? WHERE id = ?', [status, bookingId]);
+        res.json({ message: "Booking status updated" });
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: error.message });
     }
 };
