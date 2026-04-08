@@ -3,75 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact | LUXEDRIVE</title>
+    <title>Contact – LUXEDRIVE</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <nav>
-        <div class="logo">LUXEDRIVE</div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/cars">Fleet</a>
-            <a href="/contact" class="active">Contact</a>
-            <a href="/login" id="loginBtn">Sign In</a>
-            <a href="#" id="logoutBtn" style="display: none;" onclick="logout()">Logout</a>
-        </div>
-    </nav>
 
-    <header class="page-header">
-        <h1 class="reveal">Contact Us</h1>
-        <p class="reveal">Premium support for premium journeys</p>
-    </header>
+<nav>
+    <div class="logo"><a href="/">LUXEDRIVE</a></div>
+    <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/cars">Fleet</a></li>
+        <li><a href="/contact" class="active">Contact</a></li>
+    </ul>
+    <div class="nav-btns" id="nav-auth-btns">
+        <a href="/login"    class="btn btn-outline btn-sm">Login</a>
+        <a href="/register" class="btn btn-primary btn-sm">Sign Up</a>
+    </div>
+</nav>
 
-    <div class="container">
-        <div class="contact-grid">
-            <div class="car-card reveal">
-                <h3 style="margin-bottom: 1rem;">Concierge Support</h3>
-                <p style="color: var(--gray); margin-bottom: 1.5rem;">
-                    For bookings, partnerships, or VIP requests, reach out and our concierge team will respond.
-                </p>
+<div class="page-header">
+    <h1>📬 Get In Touch</h1>
+    <p>We'd love to hear from you. Send us a message and we'll respond promptly.</p>
+</div>
 
-                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
-                    <div class="btn-outline" style="padding: 1.25rem; border-radius: 16px; pointer-events: none;">
-                        Email: concierge@luxedrive.com
-                    </div>
-                    <div class="btn-outline" style="padding: 1.25rem; border-radius: 16px; pointer-events: none;">
-                        Phone: +1 (800) LUXE-DRIV
-                    </div>
-                    <div class="btn-outline" style="padding: 1.25rem; border-radius: 16px; pointer-events: none;">
-                        Hours: Mon–Sat, 9:00 AM – 7:00 PM
-                    </div>
+<section class="section-padding">
+    <div style="max-width:600px; margin:0 auto;">
+        <div class="card">
+            <h2 class="card-title">✉️ Contact Form</h2>
+            <div class="alert alert-success" id="successMsg">✅ Thank you! We'll get back to you soon.</div>
+            <div class="alert alert-error"   id="errorMsg"></div>
+
+            <form id="contactForm">
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="contactName" required placeholder="John Doe">
                 </div>
-            </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="contactEmail" required placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="contactSubject" required placeholder="How can we help?">
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="contactMessage" required placeholder="Write your message here…"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Send Message</button>
+            </form>
+        </div>
 
-            <div class="car-card reveal">
-                <h3 style="margin-bottom: 1rem;">Send a Message</h3>
-                <form id="contactForm">
-                    <div class="form-group">
-                        <label for="contactName">Full Name</label>
-                        <input type="text" id="contactName" placeholder="Your name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="contactEmail">Email Address</label>
-                        <input type="email" id="contactEmail" placeholder="name@example.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="contactSubject">Subject</label>
-                        <input type="text" id="contactSubject" placeholder="Booking inquiry" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="contactMessage">Message</label>
-                        <textarea id="contactMessage" rows="6" placeholder="How can we help?" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg full-width">Send Message</button>
-                </form>
-                <p style="color: var(--gray); margin-top: 1rem; font-size: 0.9rem;">
-                    We typically respond within 24 hours.
-                </p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1rem;">
+            <div class="card" style="text-align:center; margin-bottom:0">
+                <div style="font-size:2rem; margin-bottom:.5rem">📧</div>
+                <h4 style="margin-bottom:.25rem">Email</h4>
+                <p style="font-size:.88rem; color:#64748b">concierge@luxedrive.com</p>
+            </div>
+            <div class="card" style="text-align:center; margin-bottom:0">
+                <div style="font-size:2rem; margin-bottom:.5rem">📞</div>
+                <h4 style="margin-bottom:.25rem">Phone</h4>
+                <p style="font-size:.88rem; color:#64748b">+1 (800) LUXE-DRIV</p>
             </div>
         </div>
     </div>
+</section>
 
-    <script src="/js/script.js"></script>
+<footer>
+    <div class="footer-bottom"><p>© 2026 LUXEDRIVE. All rights reserved.</p></div>
+</footer>
+
+<script src="/js/utils.js"></script>
+<script src="/js/script.js"></script>
 </body>
 </html>
