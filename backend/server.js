@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const multer = require('multer');
 require('dotenv').config();
 
@@ -13,13 +14,20 @@ const { authRequired, adminOnly } = require('./middleware/auth');
 
 const app = express();
 
+// ─── Ensure Upload Directory Exists ──────────────────────────────────────────
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('[INIT] Created uploads directory');
+}
+
 // ─── Core Middleware ─────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded car images from /uploads URL path
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadDir));
 
 // Serve all frontend files as static assets
 app.use(express.static(path.join(__dirname, '../frontend')));
@@ -27,9 +35,10 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // ─── Multer (image upload) ────────────────────────────────────────────────────
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, 'uploads/'));
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
+        // Create safe filename: timestamp-original
         const safeName = file.originalname.replace(/\s+/g, '_');
         cb(null, Date.now() + '-' + safeName);
     }
@@ -99,7 +108,4 @@ app.use((err, req, res, _next) => {
 const PORT = parseInt(process.env.PORT) || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`   DB_HOST: ${process.env.DB_HOST}`);
-    console.log(`   DB_NAME: ${process.env.DB_NAME}`);
-    console.log(`   DB_PORT: ${process.env.DB_PORT}`);
 });
