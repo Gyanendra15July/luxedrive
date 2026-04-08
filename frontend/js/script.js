@@ -15,46 +15,66 @@ function setupScrollReveal() {
     check();
 }
 
-// ─── Nav Auth State ─────────────────────────────────────────────────────────
-function checkAuth() {
-    const token   = localStorage.getItem('token');
-    const name    = localStorage.getItem('name');
-    const role    = localStorage.getItem('role');
+// ─── Navbar Auth & Toggle ───────────────────────────────────────────────────
+function setupNavbar() {
+    const token = auth.getToken();
+    const name  = localStorage.getItem('name');
+    const role  = localStorage.getItem('role');
+    const nav   = document.querySelector('nav');
+    
+    // 1. Create hamburger if not exists
+    if (!document.querySelector('.hamburger')) {
+        const hamburger = document.createElement('div');
+        hamburger.className = 'hamburger';
+        hamburger.innerHTML = '<span></span><span></span><span></span>';
+        nav.appendChild(hamburger);
+        
+        hamburger.onclick = () => {
+            hamburger.classList.toggle('open');
+            document.querySelector('.nav-links').classList.toggle('open');
+        };
+    }
+
+    // 2. Dynamic nav links based on auth
+    const navLinks = document.querySelector('.nav-links');
+    if (navLinks) {
+        let linksHtml = `<li><a href="/" id="link-home">Home</a></li>
+                         <li><a href="/cars" id="link-cars">Fleet</a></li>
+                         <li><a href="/contact" id="link-contact">Contact</a></li>`;
+        
+        if (token) {
+            linksHtml += `<li><a href="/bookings" id="link-bookings">My Bookings</a></li>
+                          ${role === 'admin' ? `<li><a href="/admin" id="link-admin">Admin Panel</a></li>` : ''}`;
+        }
+        navLinks.innerHTML = linksHtml;
+    }
+
+    // 3. Dynamic Auth buttons
     const navAuth = document.getElementById('nav-auth-btns');
-
-    if (token && navAuth) {
-        navAuth.innerHTML = `
-            <a href="/profile" style="margin-right:15px; color:var(--primary-light); font-weight:600;">
-                👤 ${name || 'Profile'}
-            </a>
-            ${role === 'admin' ? `<a href="/admin" class="btn btn-outline" style="padding:.5rem 1rem; margin-right:8px;">Admin Panel</a>` : `<a href="/dashboard" class="btn btn-outline" style="padding:.5rem 1rem; margin-right:8px;">My Bookings</a>`}
-            <button onclick="auth.logout()" class="btn btn-primary" style="padding:.5rem 1rem;">Logout</button>
-        `;
+    if (navAuth) {
+        if (token) {
+            navAuth.innerHTML = `
+                <a href="/profile" id="link-profile" style="color:var(--primary-light); font-weight:700; display:flex; align-items:center; gap:5px;">
+                   👤 ${name || 'User'}
+                </a>
+                <button onclick="auth.logout()" class="btn btn-outline btn-sm">Logout</button>
+            `;
+        } else {
+            navAuth.innerHTML = `
+                <a href="/login" class="btn btn-outline btn-sm">Login</a>
+                <a href="/register" class="btn btn-primary btn-sm">Sign Up</a>
+            `;
+        }
     }
 
-    // Handle individual nav link IDs used on older pages
-    const loginBtn          = document.getElementById('loginBtn');
-    const logoutBtn         = document.getElementById('logoutBtn');
-    const userDashboardLink = document.getElementById('userDashboardLink');
-    const adminDashboardLink= document.getElementById('adminDashboardLink');
-
-    if (token) {
-        if (loginBtn)           loginBtn.style.display = 'none';
-        if (logoutBtn)          logoutBtn.style.display = 'inline-flex';
-        if (userDashboardLink)  userDashboardLink.style.display  = role === 'user'  ? 'inline-flex' : 'none';
-        if (adminDashboardLink) adminDashboardLink.style.display = role === 'admin' ? 'inline-flex' : 'none';
-    } else {
-        if (loginBtn)           loginBtn.style.display = 'inline-flex';
-        if (logoutBtn)          logoutBtn.style.display = 'none';
-        if (userDashboardLink)  userDashboardLink.style.display  = 'none';
-        if (adminDashboardLink) adminDashboardLink.style.display = 'none';
-    }
+    // 4. Highlight active link
+    const path = window.location.pathname;
+    document.querySelectorAll('.nav-links a, .nav-btns a').forEach(link => {
+        if (link.getAttribute('href') === path) link.classList.add('active');
+    });
 }
 
-function logout() { auth.logout(); }
-
 // ─── Homepage Featured Cars ─────────────────────────────────────────────────
-// DB schema: id, name, image, price_per_day, description, available
 async function fetchFeaturedCars() {
     const carGrid = document.getElementById('featured-cars');
     if (!carGrid) return;
@@ -64,7 +84,7 @@ async function fetchFeaturedCars() {
         const cars = await response.json();
 
         if (!Array.isArray(cars) || cars.length === 0) {
-            carGrid.innerHTML = '<p style="text-align:center;width:100%;grid-column:1/-1">No cars available right now.</p>';
+            carGrid.innerHTML = '<p class="empty-state">No cars available right now.</p>';
             return;
         }
 
@@ -75,90 +95,21 @@ async function fetchFeaturedCars() {
                      onerror="this.src='https://placehold.co/400x250/1e293b/white?text=Car'">
                 <div class="car-info">
                     <h3>${car.name}</h3>
-                    <div class="car-price">$${car.price_per_day} / day</div>
-                    <p style="color:var(--gray);font-size:.9rem;margin:.5rem 0 1rem">${car.description || ''}</p>
-                    <a href="/dashboard" class="btn btn-primary" style="display:block;text-align:center;">Book Now</a>
+                    <div class="car-price">$${car.price_per_day} <span>/ day</span></div>
+                    <p class="car-desc">${car.description || ''}</p>
+                    <a href="/dashboard" class="btn btn-primary btn-full">View Details</a>
                 </div>
             </div>
         `).join('');
     } catch (error) {
         console.error('[Featured Cars Error]', error);
-        carGrid.innerHTML = '<p style="text-align:center;width:100%;grid-column:1/-1">Failed to load cars.</p>';
+        carGrid.innerHTML = '<p class="empty-state">Failed to load cars.</p>';
     }
-}
-
-// ─── Login Handler ───────────────────────────────────────────────────────────
-async function handleLogin(e) {
-    e.preventDefault();
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-
-    try {
-        const res  = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            auth.setSession(data.user, data.token);
-            window.location.href = data.user.role === 'admin' ? '/admin' : '/dashboard';
-        } else {
-            alert(data.message || 'Login failed');
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Connection error. Please try again.');
-    }
-}
-
-// ─── Register Handler ────────────────────────────────────────────────────────
-async function handleRegister(e) {
-    e.preventDefault();
-    const name     = document.getElementById('name').value.trim();
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const role     = document.getElementById('role')?.value || 'user';
-
-    try {
-        const res  = await fetch(`${API_URL}/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password, role })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            alert('Registration successful! Please login.');
-            window.location.href = '/login';
-        } else {
-            alert(data.message || 'Registration failed');
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Connection error. Please try again.');
-    }
-}
-
-// ─── Contact Handler ─────────────────────────────────────────────────────────
-async function handleContact(e) {
-    e.preventDefault();
-    alert('Thank you! Your message has been received.');
-    e.target.reset();
 }
 
 // ─── DOMContentLoaded Bootstrap ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     setupScrollReveal();
-    checkAuth();
+    setupNavbar();
     fetchFeaturedCars();
-
-    const loginForm    = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const contactForm  = document.getElementById('contactForm');
-
-    if (loginForm)    loginForm.addEventListener('submit', handleLogin);
-    if (registerForm) registerForm.addEventListener('submit', handleRegister);
-    if (contactForm)  contactForm.addEventListener('submit', handleContact);
 });

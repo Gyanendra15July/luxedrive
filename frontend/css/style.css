@@ -65,34 +65,38 @@ button { font-family: inherit; }
 nav {
     position: sticky;
     top: 0;
-    z-index: 100;
-    background: var(--dark);
+    z-index: 1000;
+    background: rgba(15, 23, 42, 0.9);
     border-bottom: 1px solid rgba(255,255,255,.07);
     padding: 0 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 68px;
-    backdrop-filter: blur(8px);
+    height: 72px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
-.logo {
-    font-size: 1.5rem;
-    font-weight: 900;
-    letter-spacing: -.03em;
-    background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    flex-shrink: 0;
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    z-index: 1001;
+    padding: 10px;
 }
 
-.logo a {
-    background: inherit;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.hamburger span {
+    display: block;
+    width: 25px;
+    height: 2px;
+    background: var(--white);
+    transition: var(--transition);
 }
+
+.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
 .nav-links {
     display: flex;
@@ -787,19 +791,33 @@ footer ul li a:hover { color: var(--white); }
     .hero h1 { font-size: 2.5rem; }
 }
 
-@media (max-width: 640px) {
-    nav { padding: 0 1rem; }
-    .nav-links { display: none; }
-    .hero { padding: 4rem 1.25rem; min-height: 70vh; }
-    .hero h1 { font-size: 2rem; }
-    .hero-stats { gap: 1.5rem; }
-    .footer-grid { grid-template-columns: 1fr; }
-    .section-padding { padding: 3rem 1.25rem; }
-    .dash-layout { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 1rem; }
-    .sidebar nav { display: flex; flex-wrap: wrap; gap: .35rem; }
-    .sidebar nav a { padding: .45rem .8rem; font-size: .82rem; }
-    .sidebar .spacer { display: none; }
-    .car-grid { grid-template-columns: 1fr; padding: 0 1rem; }
-    .stats-row { grid-template-columns: 1fr 1fr; }
+@media (max-width: 768px) {
+    .hamburger { display: flex; }
+    
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 280px;
+        height: 100vh;
+        background: var(--dark);
+        flex-direction: column;
+        justify-content: center;
+        padding: 2rem;
+        gap: 1.5rem;
+        transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+    }
+
+    .nav-links.open { right: 0; }
+    
+    .nav-links a { font-size: 1.1rem; width: 100%; text-align: center; }
+    
+    .nav-btns {
+        width: 100%;
+        flex-direction: column;
+        margin-top: 1rem;
+    }
 }
