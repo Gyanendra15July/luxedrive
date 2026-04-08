@@ -5,18 +5,44 @@ exports.bookCar = async (req, res) => {
     try {
         console.log('[API HIT] POST /api/book');
         const { car_id, start_date, end_date } = req.body;
-        const user_id = req.user.id; // FIX: was req.userId
+        const user_id = req.user.id;
 
         if (!car_id || !start_date || !end_date) {
             return res.status(400).json({ message: 'car_id, start_date, end_date are required' });
         }
 
+        // 1. Fetch Car Price
+        const [cars] = await db.execute('SELECT price_per_day FROM cars WHERE id = ?', [car_id]);
+        if (cars.length === 0) {
+            return res.status(404).json({ message: 'Car not found' });
+        }
+        const price_per_day = parseFloat(cars[0].price_per_day);
+
+        // 2. Calculate Days
+        const start = new Date(start_date);
+        const end   = new Date(end_date);
+        const diffTime = end - start;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 0) {
+            return res.status(400).json({ message: 'End date must be after start date' });
+        }
+
+        // 3. Calculate Total Price
+        const total_price = diffDays * price_per_day;
+
+        // 4. Insert with total_price
         const [result] = await db.execute(
-            'INSERT INTO bookings (user_id, car_id, start_date, end_date) VALUES (?, ?, ?, ?)',
-            [user_id, car_id, start_date, end_date]
+            'INSERT INTO bookings (user_id, car_id, start_date, end_date, total_price) VALUES (?, ?, ?, ?, ?)',
+            [user_id, car_id, start_date, end_date, total_price]
         );
 
-        res.status(201).json({ message: 'Booking request submitted', bookingId: result.insertId });
+        console.log(`[BOOK SUCCESS] ID: ${result.insertId}, Total: $${total_price}`);
+        res.status(201).json({ 
+            message: 'Booking request submitted', 
+            bookingId: result.insertId,
+            total_price 
+        });
     } catch (error) {
         console.error('[BOOK ERROR]', error.message);
         res.status(500).json({ message: error.message });
@@ -27,7 +53,7 @@ exports.bookCar = async (req, res) => {
 exports.getMyBookings = async (req, res) => {
     try {
         console.log('[API HIT] GET /api/my-bookings');
-        const user_id = req.user.id; // FIX: was req.userId
+        const user_id = req.user.id;
 
         const [bookings] = await db.execute(
             `SELECT b.*, c.name AS car_name, c.image AS car_image, c.price_per_day
@@ -50,7 +76,7 @@ exports.getAllBookings = async (req, res) => {
         console.log('[API HIT] GET /api/all-bookings');
         const [bookings] = await db.execute(
             `SELECT b.*, u.name AS user_name, u.email AS user_email,
-                    c.name AS car_name, c.price_per_day
+                     c.name AS car_name, c.price_per_day
              FROM bookings b
              JOIN users u ON b.user_id = u.id
              JOIN cars  c ON b.car_id  = c.id
