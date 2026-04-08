@@ -58,7 +58,7 @@
                     alert('Registration successful! Please login.');
                     window.location.href = 'login.html';
                 } else {
-                    alert(result.message);
+                    alert(result.message || 'Registration failed');
                 }
             } catch (err) {
                 alert('Connection error. Please try again.');

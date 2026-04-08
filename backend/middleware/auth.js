@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 
-const verifyToken = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
+const authRequired = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
     
     if (!token) {
         return res.status(403).json({ message: "No token provided" });
@@ -11,17 +12,16 @@ const verifyToken = (req, res, next) => {
         if (err) {
             return res.status(401).json({ message: "Unauthorized!" });
         }
-        req.userId = decoded.id;
-        req.userRole = decoded.role;
+        req.user = decoded; // Store entire decoded object (id, role)
         next();
     });
 };
 
-const isAdmin = (req, res, next) => {
-    if (req.userRole !== 'admin') {
+const adminOnly = (req, res, next) => {
+    if (!req.user || req.user.role !== 'admin') {
         return res.status(403).json({ message: "Require Admin Role!" });
     }
     next();
 };
 
-module.exports = { verifyToken, isAdmin };
+module.exports = { authRequired, adminOnly };
