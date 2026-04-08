@@ -97,7 +97,7 @@
                             <small style="color:#64748b">→ ${new Date(b.end_date).toLocaleDateString()}</small>
                         </td>
                         <td>$${b.price_per_day}</td>
-                        <td><span class="badge badge-${b.status}">${b.status.toUpperCase()}</span></td>
+                        <td><span class="badge badge-${b.status}">${(b.status || 'pending').toUpperCase()}</span></td>
                         <td>
                             ${b.status === 'pending' ? `
                                 <div class="action-btns">

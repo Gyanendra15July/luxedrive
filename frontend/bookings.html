@@ -100,7 +100,7 @@
                         <td>${new Date(b.start_date).toLocaleDateString()}</td>
                         <td>${new Date(b.end_date).toLocaleDateString()}</td>
                         <td>$${b.price_per_day}</td>
-                        <td><span class="badge badge-${b.status}">${b.status.toUpperCase()}</span></td>
+                        <td><span class="badge badge-${b.status}">${(b.status || 'pending').toUpperCase()}</span></td>
                     </tr>
                 `).join('');
             } catch (err) {

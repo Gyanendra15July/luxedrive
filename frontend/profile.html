@@ -173,7 +173,7 @@
                         </div>
                         <div class="booking-status">
                             <div class="price">$${b.price_per_day}</div>
-                            <span class="badge badge-${b.status}">${b.status.toUpperCase()}</span>
+                            <span class="badge badge-${b.status}">${(b.status || 'pending').toUpperCase()}</span>
                         </div>
                     </div>
                 `).join('');
